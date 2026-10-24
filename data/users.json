@@ -1,0 +1,21 @@
+[
+  {
+    "userId": "USR-CBCFCCD7",
+    "name": "Ritika Sen",
+    "email": "artisan_fan_1792824653538@example.com",
+    "mobile": "9830123456",
+    "password": "password123",
+    "addresses": [
+      {
+        "id": "ADDR-095069",
+        "address": "Flat 3A, Lake Road",
+        "city": "Kolkata",
+        "pincode": "700029",
+        "state": "West Bengal",
+        "isDefault": true,
+        "createdAt": "2026-10-24T06:50:53.572Z"
+      }
+    ],
+    "createdAt": "2026-10-24T06:50:53.548Z"
+  }
+]

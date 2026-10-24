@@ -1,0 +1,129 @@
+[
+  {
+    "orderId": "RSA-KOL-9682",
+    "createdAt": "2026-10-24T06:50:53.588Z",
+    "status": "Dispatched / Shipping",
+    "customer": {
+      "name": "Ritika Sen",
+      "phone": "9830123456",
+      "email": "artisan_fan_1792824653538@example.com",
+      "address": "Flat 3A, Lake Road",
+      "city": "Kolkata",
+      "pincode": "700029",
+      "state": "West Bengal"
+    },
+    "items": [
+      {
+        "id": "rsa-1",
+        "title": "Raw Glaze Ceramic Earth Mug",
+        "price": 650,
+        "quantity": 2,
+        "lineTotal": 1300
+      }
+    ],
+    "pricing": {
+      "currency": "INR",
+      "currencySymbol": "₹",
+      "subtotal": 1300,
+      "discount": 0,
+      "couponCode": null,
+      "deliveryCharge": 60,
+      "deliveryRegion": "Kolkata",
+      "totalAmount": 1360
+    },
+    "delivery": {
+      "timeline": "7 to 10 business days",
+      "estimatedDateRange": "31 Oct - 3 Nov",
+      "packaging": "Biodegradable protective craft packaging"
+    },
+    "whatsappMessage": "🛍️ *NEW ORDER RECEIVED - RSA CREATIONS*\n---------------------------------------\n*Order ID:* RSA-KOL-9682\n*Customer:* Ritika Sen\n*Phone:* 9830123456\n*Address:* Flat 3A, Lake Road, Kolkata - 700029\n---------------------------------------\n*Items Ordered:*\n• Raw Glaze Ceramic Earth Mug (x2) - ₹1300\n---------------------------------------\n*Subtotal:* ₹1300\n*Discount:* -₹0\n*Delivery Fee (Kolkata):* ₹60\n*Total Payable:* ₹1360\n*Estimated Delivery:* 31 Oct - 3 Nov (7 to 10 business days)\n---------------------------------------\nHandcrafted with love at RSA Creations ✨",
+    "statusUpdatedAt": "2026-10-24T07:18:38.234Z",
+    "timeline": [
+      {
+        "status": "Dispatched / Shipping",
+        "timestamp": "2026-10-24T07:18:38.235Z",
+        "notes": null
+      }
+    ],
+    "shippingDetails": {
+      "trackingNumber": "IND9928374",
+      "carrier": "India Post / Blue Dart"
+    }
+  },
+  {
+    "orderId": "RSA-KOL-6284",
+    "createdAt": "2026-10-24T04:34:52.453Z",
+    "status": "Confirmed & In Artisan Workshop",
+    "customer": {
+      "name": "Subhashree Roy",
+      "phone": "9830112233",
+      "email": "subha@example.com",
+      "address": "14 Gariahat Road",
+      "city": "Kolkata",
+      "pincode": "700019",
+      "state": "West Bengal"
+    },
+    "items": [
+      {
+        "id": "rsa-1",
+        "title": "Raw Glaze Ceramic Earth Mug",
+        "price": 650,
+        "quantity": 2,
+        "lineTotal": 1300
+      }
+    ],
+    "pricing": {
+      "currency": "INR",
+      "currencySymbol": "₹",
+      "subtotal": 1300,
+      "discount": 130,
+      "couponCode": "HANDMADE10",
+      "deliveryCharge": 60,
+      "deliveryRegion": "Kolkata",
+      "totalAmount": 1230
+    },
+    "delivery": {
+      "timeline": "7 to 10 business days",
+      "estimatedDateRange": "31 Oct - 3 Nov",
+      "packaging": "Biodegradable protective craft packaging"
+    },
+    "whatsappMessage": "🛍️ *NEW ORDER RECEIVED - RSA CREATIONS*\n---------------------------------------\n*Order ID:* RSA-KOL-6284\n*Customer:* Subhashree Roy\n*Phone:* 9830112233\n*Address:* 14 Gariahat Road, Kolkata - 700019\n---------------------------------------\n*Items Ordered:*\n• Raw Glaze Ceramic Earth Mug (x2) - ₹1300\n---------------------------------------\n*Subtotal:* ₹1300\n*Discount:* -₹130\n*Delivery Fee (Kolkata):* ₹60\n*Total Payable:* ₹1230\n*Estimated Delivery:* 31 Oct - 3 Nov (7 to 10 business days)\n---------------------------------------\nHandcrafted with love at RSA Creations ✨"
+  },
+  {
+    "orderId": "RSA-KOL-7936",
+    "createdAt": "2026-10-24T04:24:28.810Z",
+    "status": "Confirmed & In Artisan Workshop",
+    "customer": {
+      "name": "Priya Sen",
+      "phone": "9831122334",
+      "email": "priya@example.com",
+      "address": "22 Ballygunge Circular Rd",
+      "city": "Kolkata",
+      "pincode": "700019",
+      "state": "West Bengal"
+    },
+    "items": [
+      {
+        "id": "rsa-1",
+        "name": "Raw Glaze Ceramic Earth Mug",
+        "price": 650,
+        "quantity": 1
+      }
+    ],
+    "pricing": {
+      "currency": "INR",
+      "currencySymbol": "₹",
+      "subtotal": 650,
+      "discount": 65,
+      "promoCode": "HANDMADE10",
+      "deliveryCharge": 60,
+      "deliveryRegion": "Kolkata Metropolitan Area",
+      "totalAmount": 645
+    },
+    "delivery": {
+      "timeline": "7 to 10 business days",
+      "estimatedArrival": "31 Oct - 3 Nov",
+      "packaging": "Biodegradable protective craft packaging"
+    }
+  }
+]
