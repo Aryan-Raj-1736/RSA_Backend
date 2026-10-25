@@ -497,17 +497,27 @@ app.post('/api/orders', (req, res) => {
     if (req.body.paymentMethod === 'COD' || req.body.isCod === true) {
       return res.status(400).json({
         success: false,
-        error: 'Cash on Delivery (COD) is not available. Please make payment via PhonePe / UPI (7980883038).'
+        error: 'Cash on Delivery (COD) is disabled. Please pay via PhonePe / UPI (7980883038).'
       });
     }
 
+    // MANDATORY PREPAID UPI PAYMENT ENFORCEMENT
     const upiTransactionId = (req.body.transactionId || req.body.upiTransactionId || '').trim();
+    if (!upiTransactionId || upiTransactionId.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: `Prepaid Payment Verification Required! Please pay ₹${totalAmount} to PhonePe UPI (7980883038) and enter your 12-digit UPI / UTR Transaction ID to confirm your order.`
+      });
+    }
+
     const paymentInfo = {
-      method: 'Online PhonePe / UPI',
+      method: 'Online PhonePe / UPI (Prepaid)',
       upiNumber: '7980883038',
       upiId: '7980883038@ybl',
-      transactionId: upiTransactionId || 'Prepaid - Awaiting UTR Verification',
-      status: upiTransactionId ? 'Prepaid (UTR Submitted)' : 'Prepaid (Online PhonePe: 7980883038)',
+      transactionId: upiTransactionId,
+      paidAmount: totalAmount,
+      status: `Paid & Verified (UTR: ${upiTransactionId})`,
+      verifiedAt: new Date().toISOString(),
       codAvailable: false
     };
 

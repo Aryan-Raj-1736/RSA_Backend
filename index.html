@@ -585,7 +585,7 @@
                 <input type="radio" name="paymentOption" id="payPhonePe" value="phonepe" checked>
                 <label for="payPhonePe" class="payment-option-title">
                   <span class="payment-brand-badge phonepe-badge">PhonePe / UPI</span>
-                  <strong>Pay via PhonePe / Any UPI App</strong>
+                  <strong>Pay via PhonePe / Any UPI App (Mandatory)</strong>
                 </label>
               </div>
 
@@ -602,15 +602,37 @@
               </div>
 
               <div class="upi-pay-instructions">
+                <div class="pay-amount-banner" style="background: rgba(95, 37, 159, 0.08); border-left: 4px solid #5F259F; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 0.82rem; font-weight: 600; color: #5F259F;">Total Amount to Pay:</span>
+                  <strong class="pay-amount-highlight" id="upiAmountToPay" style="font-size: 1.15rem; color: #5F259F; font-weight: 800;">₹0</strong>
+                </div>
+
                 <ol>
                   <li>Open <strong>PhonePe</strong>, GPay, Paytm, or any UPI app.</li>
-                  <li>Send the total payable amount to <strong>7980883038</strong>.</li>
-                  <li>Enter the 12-digit UPI / UTR Transaction ID below:</li>
+                  <li>Pay the exact amount (<strong id="upiPayAmountStep">₹0</strong>) to <strong>7980883038</strong>.</li>
+                  <li>Copy the 12-digit UPI / UTR Transaction Reference No. from your payment receipt.</li>
+                  <li>Enter the 12-digit UTR ID below to verify and unlock your order:</li>
                 </ol>
+
+                <div class="upi-quick-actions" style="margin-bottom: 10px;">
+                  <a id="openUpiAppBtn" href="upi://pay?pa=7980883038@ybl&pn=RSA%20Creations&cu=INR" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem;">
+                    📱 Pay via PhonePe / UPI App
+                  </a>
+                </div>
+
                 <div class="form-group" style="margin-top: 8px;">
-                  <label for="checkoutUpiTxn" style="font-size: 0.78rem; font-weight: 600;">UPI / UTR Transaction Reference No. (12 digits)</label>
-                  <input type="text" id="checkoutUpiTxn" placeholder="e.g. 428901234567" maxlength="16" class="upi-txn-input">
-                  <small style="font-size: 0.72rem; color: var(--text-muted);">Helps our artisans verify your prepaid payment instantly.</small>
+                  <label for="checkoutUpiTxn" style="font-size: 0.8rem; font-weight: 700; color: #5F259F;">
+                    12-Digit UPI / UTR Transaction ID * (Required for Order Confirmation)
+                  </label>
+                  <input type="text" id="checkoutUpiTxn" required minlength="10" maxlength="16" placeholder="Enter 12-digit UTR No. (e.g. 428901234567)" class="upi-txn-input">
+                  <small style="font-size: 0.72rem; color: #5F259F; font-weight: 600;">⚠️ Order will ONLY be placed after entering your valid payment UTR number.</small>
+                </div>
+
+                <div class="payment-confirm-checkbox-wrap" style="margin-top: 10px; display: flex; gap: 8px; align-items: flex-start; background: rgba(95, 37, 159, 0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(95, 37, 159, 0.2);">
+                  <input type="checkbox" id="confirmPaymentPaid" required style="margin-top: 3px; accent-color: #5F259F;">
+                  <label for="confirmPaymentPaid" style="font-size: 0.78rem; color: var(--text-main); cursor: pointer; line-height: 1.4;">
+                    I confirm that I have completed payment of <strong id="checkboxPayAmount">₹0</strong> to PhonePe (<strong>7980883038</strong>) and entered the real 12-digit UTR reference number above.
+                  </label>
                 </div>
               </div>
             </div>

@@ -733,13 +733,30 @@ function updateCartUI() {
 
   // Calculate Final Total in INR
   const grandTotal = Math.max(0, subtotal - discountAmount + (subtotal === 0 ? 0 : effectiveShipping));
-  cartTotal.textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+  const formattedTotal = `₹${grandTotal.toLocaleString('en-IN')}`;
+  cartTotal.textContent = formattedTotal;
   if (checkoutTotalAmount) {
-    checkoutTotalAmount.textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+    checkoutTotalAmount.textContent = formattedTotal;
   }
   const placeOrderAmountBadge = document.getElementById('placeOrderAmountBadge');
   if (placeOrderAmountBadge) {
-    placeOrderAmountBadge.textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+    placeOrderAmountBadge.textContent = formattedTotal;
+  }
+  const upiAmountToPay = document.getElementById('upiAmountToPay');
+  if (upiAmountToPay) {
+    upiAmountToPay.textContent = formattedTotal;
+  }
+  const upiPayAmountStep = document.getElementById('upiPayAmountStep');
+  if (upiPayAmountStep) {
+    upiPayAmountStep.textContent = formattedTotal;
+  }
+  const checkboxPayAmount = document.getElementById('checkboxPayAmount');
+  if (checkboxPayAmount) {
+    checkboxPayAmount.textContent = formattedTotal;
+  }
+  const openUpiAppBtn = document.getElementById('openUpiAppBtn');
+  if (openUpiAppBtn) {
+    openUpiAppBtn.href = `upi://pay?pa=7980883038@ybl&pn=RSA%20Creations&cu=INR&am=${grandTotal}`;
   }
 }
 
@@ -1111,6 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const city = custCity.value.trim();
     const pincode = custZip.value.trim();
     const upiTxn = (document.getElementById('checkoutUpiTxn') || {}).value || '';
+    const paymentCheck = document.getElementById('confirmPaymentPaid');
 
     if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
       showToast('Please enter a valid 10-digit Indian mobile number for delivery updates.', 'toast');
@@ -1122,10 +1140,27 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // MANDATORY PAYMENT ENFORCEMENT
+    if (!upiTxn || upiTxn.trim().length < 8) {
+      showToast('⚠️ Payment Verification Required! Please pay via PhonePe to 7980883038 and enter the 12-digit UPI / UTR Transaction ID.', 'toast');
+      const upiInput = document.getElementById('checkoutUpiTxn');
+      if (upiInput) {
+        upiInput.focus();
+        upiInput.style.borderColor = '#C45D3E';
+      }
+      return;
+    }
+
+    if (paymentCheck && !paymentCheck.checked) {
+      showToast('⚠️ Please check the confirmation box verifying that you have completed payment to PhonePe (7980883038).', 'toast');
+      paymentCheck.focus();
+      return;
+    }
+
     const placeBtn = document.getElementById('placeOrderBtn');
     if (placeBtn) {
       placeBtn.disabled = true;
-      placeBtn.innerHTML = `<span>⏳ Processing & Confirming Order...</span>`;
+      placeBtn.innerHTML = `<span>⏳ Verifying Payment & Placing Order...</span>`;
     }
 
     const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -1140,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
       items: state.cart,
       subtotal,
       promoCode: state.promoApplied ? 'HANDMADE10' : null,
-      paymentMethod: 'Online PhonePe / UPI',
+      paymentMethod: 'Online PhonePe / UPI (Prepaid)',
       transactionId: upiTxn.trim()
     };
 
@@ -1156,18 +1191,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await response.json();
 
+      if (!data.success) {
+        showToast(data.error || 'Payment verification failed. Please check your UTR number.', 'toast');
+        if (placeBtn) {
+          placeBtn.disabled = false;
+          placeBtn.innerHTML = `<span>✅ Confirm & Place Order</span><span id="placeOrderAmountBadge" class="btn-amount-badge">${confirmedTotal}</span>`;
+        }
+        return;
+      }
+
       if (data.success && data.order) {
         confirmedOrderId = data.order.orderId;
         if (data.order.pricing && data.order.pricing.totalAmount) {
           confirmedTotal = `₹${data.order.pricing.totalAmount}`;
         }
-      } else {
-        const fallbackId = city.toLowerCase().includes('kolkata') ? '#RSA-KOL-9142' : '#RSA-IND-9142';
-        confirmedOrderId = fallbackId;
       }
     } catch (err) {
-      const fallbackId = city.toLowerCase().includes('kolkata') ? '#RSA-KOL-9142' : '#RSA-IND-9142';
-      confirmedOrderId = fallbackId;
+      showToast('Network error while verifying payment. Please ensure your internet is active.', 'toast');
+      if (placeBtn) {
+        placeBtn.disabled = false;
+        placeBtn.innerHTML = `<span>✅ Confirm & Place Order</span><span id="placeOrderAmountBadge" class="btn-amount-badge">${confirmedTotal}</span>`;
+      }
+      return;
     } finally {
       if (placeBtn) {
         placeBtn.disabled = false;
