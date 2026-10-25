@@ -24,8 +24,8 @@ app.use(express.json());
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, '../RSA-frontend')));
 
-// Explicit Root Route handler to serve storefront index.html
-app.get('/', (req, res) => {
+// Direct Storefront Route Handlers
+app.get(['/', '/index.html'], (req, res) => {
   const localIndex = path.resolve(__dirname, 'index.html');
   const parentIndex = path.resolve(__dirname, '../RSA-frontend/index.html');
   if (fs.existsSync(localIndex)) return res.sendFile(localIndex);
@@ -33,13 +33,13 @@ app.get('/', (req, res) => {
   res.send('RSA Creations Storefront');
 });
 
-// Admin Route helper
-app.get('/admin', (req, res) => {
+// Direct Admin Portal Route Handlers
+app.get(['/admin', '/admin.html'], (req, res) => {
   const localAdmin = path.resolve(__dirname, 'admin.html');
   const parentAdmin = path.resolve(__dirname, '../RSA-frontend/admin.html');
   if (fs.existsSync(localAdmin)) return res.sendFile(localAdmin);
   if (fs.existsSync(parentAdmin)) return res.sendFile(parentAdmin);
-  res.redirect('/admin.html');
+  res.send('RSA Creations Admin Portal');
 });
 
 // Data Directory & Persistence
@@ -1079,11 +1079,6 @@ app.get('/health', (req, res) => {
 // ============================================================================
 // ADMIN PANEL ENDPOINTS
 // ============================================================================
-
-// Admin Portal Route
-app.get('/admin', (req, res) => {
-  res.redirect('/admin.html');
-});
 
 // Admin Login
 app.post('/api/admin/login', (req, res) => {
