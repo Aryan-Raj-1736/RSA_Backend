@@ -24,13 +24,22 @@ app.use(express.json());
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, '../RSA-frontend')));
 
-// Root route handler to serve storefront index.html
+// Explicit Root Route handler to serve storefront index.html
 app.get('/', (req, res) => {
-  const localIndex = path.join(__dirname, 'index.html');
-  const parentIndex = path.join(__dirname, '../RSA-frontend/index.html');
+  const localIndex = path.resolve(__dirname, 'index.html');
+  const parentIndex = path.resolve(__dirname, '../RSA-frontend/index.html');
   if (fs.existsSync(localIndex)) return res.sendFile(localIndex);
   if (fs.existsSync(parentIndex)) return res.sendFile(parentIndex);
-  res.json({ message: 'RSA Creations Backend API is Live!', version: '2.0.0' });
+  res.send('RSA Creations Storefront');
+});
+
+// Admin Route helper
+app.get('/admin', (req, res) => {
+  const localAdmin = path.resolve(__dirname, 'admin.html');
+  const parentAdmin = path.resolve(__dirname, '../RSA-frontend/admin.html');
+  if (fs.existsSync(localAdmin)) return res.sendFile(localAdmin);
+  if (fs.existsSync(parentAdmin)) return res.sendFile(parentAdmin);
+  res.redirect('/admin.html');
 });
 
 // Data Directory & Persistence
