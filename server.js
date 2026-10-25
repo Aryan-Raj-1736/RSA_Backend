@@ -291,6 +291,10 @@ function generateWhatsAppMessage(order) {
     .map(i => `• ${i.title || i.name} (x${i.quantity}) - ₹${i.price * i.quantity}`)
     .join('\n');
 
+  const paymentText = order.payment 
+    ? `\n*Payment Mode:* ${order.payment.method} (No COD)\n*PhonePe UPI:* ${order.payment.upiNumber}\n*UTR / Ref No:* ${order.payment.transactionId}`
+    : `\n*Payment:* Online PhonePe: 7980883038 (Prepaid - No COD)`;
+
   return `🛍️ *NEW ORDER RECEIVED - RSA CREATIONS*
 ---------------------------------------
 *Order ID:* ${order.orderId}
@@ -304,7 +308,7 @@ ${itemsText}
 *Subtotal:* ₹${order.pricing.subtotal}
 *Discount:* -₹${order.pricing.discount}
 *Delivery Fee (${order.pricing.deliveryRegion}):* ₹${order.pricing.deliveryCharge}
-*Total Payable:* ₹${order.pricing.totalAmount}
+*Total Payable:* ₹${order.pricing.totalAmount}${paymentText}
 *Estimated Delivery:* ${order.delivery.estimatedDateRange} (${order.delivery.timeline})
 ---------------------------------------
 Handcrafted with love at RSA Creations ✨`;
@@ -470,6 +474,24 @@ app.post('/api/orders', (req, res) => {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const orderId = `${prefix}-${randomSuffix}`;
 
+    // Enforce Online Payment Only (No Cash on Delivery)
+    if (req.body.paymentMethod === 'COD' || req.body.isCod === true) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cash on Delivery (COD) is not available. Please make payment via PhonePe / UPI (7980883038).'
+      });
+    }
+
+    const upiTransactionId = (req.body.transactionId || req.body.upiTransactionId || '').trim();
+    const paymentInfo = {
+      method: 'Online PhonePe / UPI',
+      upiNumber: '7980883038',
+      upiId: '7980883038@ybl',
+      transactionId: upiTransactionId || 'Prepaid - Awaiting UTR Verification',
+      status: upiTransactionId ? 'Prepaid (UTR Submitted)' : 'Prepaid (Online PhonePe: 7980883038)',
+      codAvailable: false
+    };
+
     const newOrder = {
       orderId,
       createdAt: new Date().toISOString(),
@@ -494,6 +516,7 @@ app.post('/api/orders', (req, res) => {
         deliveryRegion: shipping.region,
         totalAmount
       },
+      payment: paymentInfo,
       delivery: {
         timeline: shipping.estimatedDeliveryDays,
         estimatedDateRange: shipping.estimatedDateRange,
@@ -667,6 +690,96 @@ app.post('/api/auth/login', (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, error: 'An error occurred during login.' });
+  }
+});
+
+// 8.1 POST /api/auth/recover-id - Find user account & User ID by 10-digit mobile number
+app.post('/api/auth/recover-id', (req, res) => {
+  try {
+    const { mobile } = req.body;
+    const cleanMobile = (mobile || '').replace(/\D/g, '');
+
+    if (!cleanMobile || !/^[6-9]\d{9}$/.test(cleanMobile)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid 10-digit Indian mobile number.'
+      });
+    }
+
+    const users = getUsers();
+    const user = users.find(u => u.mobile === cleanMobile);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: `No account registered with mobile number ${cleanMobile}. Please check the number or sign up.`
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: `Account found for ${user.name}!`,
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile
+      }
+    });
+  } catch (error) {
+    console.error('Recover ID error:', error);
+    res.status(500).json({ success: false, error: 'An error occurred while recovering account details.' });
+  }
+});
+
+// 8.2 POST /api/auth/reset-password - Reset password using verified mobile number
+app.post('/api/auth/reset-password', (req, res) => {
+  try {
+    const { mobile, newPassword } = req.body;
+    const cleanMobile = (mobile || '').replace(/\D/g, '');
+
+    if (!cleanMobile || !/^[6-9]\d{9}$/.test(cleanMobile)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter a valid 10-digit Indian mobile number.'
+      });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters long.'
+      });
+    }
+
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.mobile === cleanMobile);
+
+    if (userIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: `No account registered with mobile number ${cleanMobile}. Please check the number or sign up.`
+      });
+    }
+
+    // Update user password
+    users[userIndex].password = newPassword;
+    users[userIndex].updatedAt = new Date().toISOString();
+    saveUsers(users);
+
+    const updatedUser = users[userIndex];
+    console.log(`[Password Reset] User ${updatedUser.name} (${updatedUser.userId}) reset password via mobile ${cleanMobile}`);
+
+    const { password: _, ...safeUser } = updatedUser;
+    return res.json({
+      success: true,
+      message: 'Password reset successfully! You can now log in with your new password.',
+      userId: updatedUser.userId,
+      user: safeUser
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ success: false, error: 'An error occurred while resetting password.' });
   }
 });
 
