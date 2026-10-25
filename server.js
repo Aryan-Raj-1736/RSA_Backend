@@ -241,16 +241,15 @@ function saveProducts(products) {
 }
 
 // Helper: Calculate Shipping Rates & 7-10 Days Timeline
+// Policy: Kolkata = FREE (₹0), Outside Kolkata (West Bengal) = ₹100, Outside Bengal (Rest of India) = ₹150
 function calculateShippingDetails(city = '', pincode = '', state = '', subtotal = 0) {
   const cityClean = (city || '').trim().toLowerCase();
   const pinClean = (pincode || '').trim();
   const stateClean = (state || '').trim().toLowerCase();
 
-  const FREE_SHIPPING_THRESHOLD = 1999;
-  const isFreeUnlocked = subtotal >= FREE_SHIPPING_THRESHOLD;
-
   let deliveryCharge = 150; // Default outside WB (Rest of India)
-  let region = 'Rest of India';
+  let region = 'Outside Bengal (Rest of India)';
+  let isFreeDelivery = false;
 
   // 1. Kolkata Rule:
   // City contains 'kolkata' or 'calcutta', OR pincode starts with '700'
@@ -259,8 +258,9 @@ function calculateShippingDetails(city = '', pincode = '', state = '', subtotal 
                     pinClean.startsWith('700');
 
   if (isKolkata) {
-    deliveryCharge = 60;
-    region = 'Kolkata';
+    deliveryCharge = 0; // FREE Delivery for Kolkata!
+    region = 'Kolkata (Free Delivery)';
+    isFreeDelivery = true;
   } else {
     // 2. Rest of West Bengal Rule:
     // Pincode starts with 71, 72, 73, 74 or state mentions Bengal
@@ -271,15 +271,13 @@ function calculateShippingDetails(city = '', pincode = '', state = '', subtotal 
                          pinClean.startsWith('74');
 
     if (isWestBengal) {
-      deliveryCharge = 100;
-      region = 'West Bengal';
+      deliveryCharge = 100; // Flat ₹100 for West Bengal outside Kolkata
+      region = 'West Bengal (Outside Kolkata)';
     } else {
-      deliveryCharge = 150;
-      region = 'Rest of India';
+      deliveryCharge = 150; // Flat ₹150 for outside Bengal (Rest of India)
+      region = 'Outside Bengal (Rest of India)';
     }
   }
-
-  const finalDeliveryCharge = isFreeUnlocked ? 0 : deliveryCharge;
 
   // 3. Dynamic 7 to 10 Business Days Arrival Calculation
   const today = new Date();
@@ -293,15 +291,384 @@ function calculateShippingDetails(city = '', pincode = '', state = '', subtotal 
   const formattedDateRange = `${minDeliveryDate.toLocaleDateString('en-IN', options)} - ${maxDeliveryDate.toLocaleDateString('en-IN', options)}`;
 
   return {
-    deliveryCharge: finalDeliveryCharge,
+    deliveryCharge,
     standardRate: deliveryCharge,
     region,
-    freeShippingUnlocked: isFreeUnlocked,
-    freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
-    amountNeededForFreeShipping: Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal),
+    freeShippingUnlocked: isFreeDelivery,
+    isKolkataFree: isKolkata,
+    deliveryRateNote: isKolkata 
+      ? 'FREE Delivery for Kolkata orders' 
+      : (region.includes('West Bengal') ? '₹100 Delivery (West Bengal)' : '₹150 Delivery (Outside Bengal)'),
     estimatedDeliveryDays: '7 to 10 business days',
     estimatedDateRange: formattedDateRange
   };
+}
+
+// Helper: Generate printable, formatted Tax Invoice HTML
+function generateInvoiceHtml(order) {
+  const isKolkata = (order.pricing?.deliveryRegion || '').toLowerCase().includes('kolkata');
+  const isWb = (order.pricing?.deliveryRegion || '').toLowerCase().includes('bengal');
+  const deliveryLabel = isKolkata 
+    ? 'Delivery Charges (Kolkata Special - FREE)' 
+    : (isWb ? 'Delivery Charges (West Bengal - Outside Kolkata)' : 'Delivery Charges (Outside Bengal - Pan India)');
+
+  const itemsRows = (order.items || []).map((item, idx) => `
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${idx + 1}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+        <strong>${item.title || item.name || 'Handcrafted Artisan Item'}</strong>
+        <div style="font-size: 11px; color: #6b7280;">SKU: ${item.id} • Handcrafted in Bengal</div>
+      </td>
+      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${(item.price || 0).toLocaleString('en-IN')}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">₹${((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</td>
+    </tr>
+  `).join('');
+
+  const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  }) : new Date().toLocaleDateString('en-IN');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Invoice - ${order.orderId} - RSA Creations</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937;
+      background: #f3f4f6;
+      padding: 24px;
+    }
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 36px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e5e7eb;
+    }
+    .inv-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #5F259F;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+    .inv-logo-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .inv-logo-mark {
+      background: #5F259F;
+      color: #fff;
+      font-weight: 800;
+      font-size: 20px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      letter-spacing: 1px;
+    }
+    .inv-brand-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1f2937;
+      letter-spacing: -0.5px;
+    }
+    .inv-brand-tag {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .inv-title-badge {
+      text-align: right;
+    }
+    .tax-inv-pill {
+      background: #f5f3ff;
+      color: #5F259F;
+      border: 1px solid #ddd6fe;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .inv-num {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .inv-date {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .inv-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #fafaf9;
+      border-radius: 8px;
+      border: 1px solid #f0eee9;
+    }
+    .inv-info-block h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b5cf6;
+      margin-bottom: 6px;
+    }
+    .inv-info-block p {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+    .inv-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 13px;
+    }
+    .inv-table th {
+      background: #f9fafb;
+      color: #374151;
+      font-weight: 600;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #e5e7eb;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .inv-totals-box {
+      margin-left: auto;
+      width: 320px;
+      margin-bottom: 24px;
+    }
+    .inv-total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+      color: #4b5563;
+    }
+    .inv-total-row.grand-total {
+      border-top: 2px solid #111827;
+      border-bottom: 2px solid #111827;
+      padding: 10px 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #111827;
+      margin-top: 6px;
+    }
+    .free-badge {
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .payment-verified-box {
+      background: #fdf4ff;
+      border: 1px solid #f0abfc;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pay-verified-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #86198f;
+    }
+    .pay-verified-meta {
+      font-size: 12px;
+      color: #701a75;
+      margin-top: 2px;
+    }
+    .stamp-box {
+      border: 2px dashed #5F259F;
+      color: #5F259F;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      text-align: center;
+      display: inline-block;
+    }
+    .inv-footer {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .btn-action {
+      background: #5F259F;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-action:hover {
+      background: #4a1d7c;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .invoice-container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
+      .action-bar { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container" id="invoiceSheet">
+    <!-- Header -->
+    <div class="inv-top-bar">
+      <div class="inv-logo-box">
+        <span class="inv-logo-mark">RSA</span>
+        <div>
+          <div class="inv-brand-name">RSA CREATIONS</div>
+          <div class="inv-brand-tag">Handcrafted Studio • Kolkata</div>
+        </div>
+      </div>
+      <div class="inv-title-badge">
+        <span class="tax-inv-pill">Official Tax Invoice</span>
+        <div class="inv-num">Invoice #${order.orderId}</div>
+        <div class="inv-date">Date: ${orderDate}</div>
+      </div>
+    </div>
+
+    <!-- Seller & Buyer Details -->
+    <div class="inv-info-grid">
+      <div class="inv-info-block">
+        <h4>Sold & Dispatched By:</h4>
+        <p><strong>RSA Creations Artisan Workshop</strong></p>
+        <p>Kolkata, West Bengal - 700001, India</p>
+        <p>Email: contact@rsacreations.in</p>
+        <p>PhonePe / WhatsApp: +91 7980883038</p>
+        <p style="font-size: 11px; color: #6b7280; margin-top: 4px;">State: West Bengal (Code: 19)</p>
+      </div>
+      <div class="inv-info-block">
+        <h4>Billed & Shipped To:</h4>
+        <p><strong>${order.customer?.name || 'Customer'}</strong></p>
+        <p>${order.customer?.address || 'Address on file'}</p>
+        <p>${order.customer?.city || ''}${order.customer?.pincode ? ' - ' + order.customer.pincode : ''}</p>
+        <p>${order.customer?.state || 'India'}</p>
+        <p>Phone: +91 ${order.customer?.phone || ''}</p>
+        ${order.customer?.email ? `<p>Email: ${order.customer.email}</p>` : ''}
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">#</th>
+          <th>Item Description</th>
+          <th style="width: 60px; text-align: center;">Qty</th>
+          <th style="width: 100px; text-align: right;">Unit Rate</th>
+          <th style="width: 110px; text-align: right;">Total Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+
+    <!-- Totals Breakdown -->
+    <div class="inv-totals-box">
+      <div class="inv-total-row">
+        <span>Items Subtotal:</span>
+        <span>₹${(order.pricing?.subtotal || 0).toLocaleString('en-IN')}</span>
+      </div>
+      ${order.pricing?.discount > 0 ? `
+      <div class="inv-total-row" style="color: #15803d;">
+        <span>Artisan Coupon (${order.pricing?.couponCode || 'HANDMADE10'}):</span>
+        <span>-₹${order.pricing.discount.toLocaleString('en-IN')}</span>
+      </div>` : ''}
+      <div class="inv-total-row">
+        <span>${deliveryLabel}:</span>
+        <span>${order.pricing?.deliveryCharge === 0 ? '<span class="free-badge">FREE (₹0)</span>' : '₹' + (order.pricing?.deliveryCharge || 0)}</span>
+      </div>
+      <div class="inv-total-row grand-total">
+        <span>Total Paid:</span>
+        <span style="color: #5F259F;">₹${(order.pricing?.totalAmount || 0).toLocaleString('en-IN')}</span>
+      </div>
+    </div>
+
+    <!-- Verified Payment Banner -->
+    <div class="payment-verified-box">
+      <div>
+        <div class="pay-verified-title">✅ 100% Online Payment Verified</div>
+        <div class="pay-verified-meta">
+          <strong>Mode:</strong> ${order.payment?.method || 'Online PhonePe UPI (7980883038)'}<br>
+          <strong>UTR / Transaction Ref:</strong> <code>${order.payment?.transactionId || 'Verified Online'}</code>
+        </div>
+      </div>
+      <div class="stamp-box">
+        PAID IN FULL<br>RSA CREATIONS
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="inv-footer">
+      <div>
+        <strong>Estimated Delivery:</strong> ${order.delivery?.timeline || '7 to 10 business days'}<br>
+        Thank you for supporting traditional Indian artisans & handmade craft!
+      </div>
+      <div style="text-align: right;">
+        <strong>Authorized Signatory</strong><br>
+        RSA Creations (Kolkata)
+      </div>
+    </div>
+  </div>
+
+  <!-- Print & Download Action Bar -->
+  <div class="action-bar">
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Print / Save as PDF
+    </button>
+    <button class="btn-action btn-secondary" onclick="window.close()">
+      ✖ Close Window
+    </button>
+  </div>
+</body>
+</html>`;
 }
 
 // Helper: Format WhatsApp notification text for artisan/seller
@@ -594,6 +961,34 @@ app.get('/api/orders/:orderId', (req, res) => {
     success: true,
     order
   });
+});
+
+// 5b. GET /api/orders/:orderId/invoice - Render or download full printable Tax Invoice
+app.get('/api/orders/:orderId/invoice', (req, res) => {
+  const { orderId } = req.params;
+  const orders = getOrders();
+  const order = orders.find(o => o.orderId.toUpperCase() === orderId.toUpperCase());
+
+  if (!order) {
+    return res.status(404).send(`
+      <!DOCTYPE html><html><body style="font-family:sans-serif; text-align:center; padding:50px;">
+        <h2>Order Not Found</h2>
+        <p>No order found with ID #${orderId}.</p>
+      </body></html>
+    `);
+  }
+
+  if (req.query.format === 'json' || req.headers.accept?.includes('application/json')) {
+    return res.json({
+      success: true,
+      orderId: order.orderId,
+      invoiceHtml: generateInvoiceHtml(order),
+      order
+    });
+  }
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(generateInvoiceHtml(order));
 });
 
 // 6. GET /api/orders - All orders list (Admin / Dashboard)

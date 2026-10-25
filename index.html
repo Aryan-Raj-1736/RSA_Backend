@@ -14,7 +14,7 @@
   <!-- Top Announcement Bar -->
   <aside class="announcement-bar" aria-label="Special Offers">
     <div class="announcement-content">
-      <span>✨ Welcome to <strong>RSA Creations</strong> — Delivery in Kolkata: ₹60 | Outside Kolkata: ₹100–₹150 | Free shipping above ₹1,999 | Code: <mark>HANDMADE10</mark></span>
+      <span>✨ Welcome to <strong>RSA Creations</strong> — 🎉 Kolkata: <strong>FREE Delivery</strong> | Rest of West Bengal: <strong>₹100</strong> | Outside Bengal: <strong>₹150</strong> | Code: <mark>HANDMADE10</mark></span>
     </div>
   </aside>
 
@@ -144,7 +144,7 @@
           <div class="trust-info-badge trust-icon">📍</div>
           <div class="trust-info">
             <h3>Kolkata & Pan-India</h3>
-            <p>Flat ₹60 delivery in Kolkata, ₹100–₹150 across India. Free over ₹1,999.</p>
+            <p>Kolkata: <strong>FREE Delivery</strong> | West Bengal: ₹100 | Outside Bengal: ₹150.</p>
           </div>
         </div>
         <div class="trust-card">
@@ -399,9 +399,9 @@
         <div class="estimator-header">
           <span>📍 Delivery To:</span>
           <select id="cartDestinationSelect" aria-label="Select Delivery Location">
-            <option value="kolkata">Kolkata (₹60)</option>
-            <option value="wb">West Bengal (outside Kolkata) (₹100)</option>
-            <option value="india">Rest of India (₹150)</option>
+            <option value="kolkata">Kolkata (FREE Delivery - ₹0)</option>
+            <option value="wb">West Bengal (Outside Kolkata) (₹100)</option>
+            <option value="india">Outside Bengal (Rest of India) (₹150)</option>
           </select>
         </div>
         <div class="delivery-timeline-pill">
@@ -499,7 +499,7 @@
       <div class="checkout-header">
         <span class="logo-mark">RSA</span>
         <h2 id="checkoutTitle">Checkout & Confirm Order</h2>
-        <p>Doorstep delivery across Kolkata (₹60) and All India (₹100–₹150). Free above ₹1,999.</p>
+        <p>🎉 Kolkata: <strong>FREE Delivery (₹0)</strong> | West Bengal (Outside Kolkata): <strong>₹100</strong> | Outside Bengal: <strong>₹150</strong></p>
       </div>
 
       <!-- Quick Cart Items Review in Checkout -->
@@ -651,6 +651,80 @@
           </div>
         </div>
 
+        <!-- On-Screen Tax Invoice & Bill Preview (Before Confirm & Place Order) -->
+        <div class="pre-order-invoice-card" id="preOrderInvoiceCard">
+          <div class="pre-inv-header">
+            <div class="pre-inv-brand">
+              <span class="pre-inv-badge">TAX INVOICE</span>
+              <h4>Live Bill / Invoice Preview</h4>
+            </div>
+            <button type="button" class="btn-preview-fullscreen" id="btnPreviewFullInvoice">
+              <span>🔍 View Fullscreen Invoice</span>
+            </button>
+          </div>
+          <p class="pre-inv-subtitle">Review your auto-calculated delivery charges and item breakdown before confirming order:</p>
+
+          <div class="pre-inv-details-grid">
+            <div class="pre-inv-col">
+              <span class="pre-inv-label">Billed To / Delivery Address:</span>
+              <div id="preInvCustName" class="pre-inv-val">Customer: Guest</div>
+              <div id="preInvCustContact" class="pre-inv-subval">Mobile: Pending</div>
+              <div id="preInvCustAddress" class="pre-inv-subval">Address: Please enter address above</div>
+            </div>
+            <div class="pre-inv-col pre-inv-col-right">
+              <span class="pre-inv-label">Sold & Dispatched From:</span>
+              <div class="pre-inv-val">RSA Creations Workshop</div>
+              <div class="pre-inv-subval">Kolkata, West Bengal (700001)</div>
+              <div class="pre-inv-subval">PhonePe: 7980883038@ybl</div>
+            </div>
+          </div>
+
+          <!-- Items Table in Preview -->
+          <div class="pre-inv-items-wrapper">
+            <table class="pre-inv-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Price</th>
+                  <th style="text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="preInvItemsBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Invoice Calculation Rows -->
+          <div class="pre-inv-calculation-box">
+            <div class="pre-inv-calc-row">
+              <span>Items Subtotal:</span>
+              <span id="preInvSubtotal">₹0</span>
+            </div>
+            <div class="pre-inv-calc-row" id="preInvDiscountRow" style="display: none; color: #16a34a;">
+              <span>Promo Discount (HANDMADE10):</span>
+              <span id="preInvDiscount">-₹0</span>
+            </div>
+            <div class="pre-inv-calc-row pre-inv-shipping-calc-row">
+              <div class="shipping-calc-label-wrap">
+                <span>Delivery Charges:</span>
+                <small id="preInvShippingNote" class="delivery-rule-hint">📍 Kolkata = FREE | WB = ₹100 | Outside Bengal = ₹150</small>
+              </div>
+              <strong id="preInvDeliveryFee" class="delivery-highlight-badge">FREE (₹0)</strong>
+            </div>
+            <div class="pre-inv-calc-row pre-inv-grand-total-row">
+              <span>Total Payable on Invoice:</span>
+              <strong id="preInvGrandTotal">₹0</strong>
+            </div>
+          </div>
+
+          <div class="pre-inv-payment-status">
+            <span>💳 Payment Mode: <strong>Online PhonePe UPI (7980883038)</strong></span>
+            <span id="preInvUtrBadge" class="utr-status-pill">UTR: Required</span>
+          </div>
+        </div>
+
         <div class="checkout-order-summary">
           <div class="checkout-summary-row">
             <span>Subtotal:</span>
@@ -658,7 +732,7 @@
           </div>
           <div class="checkout-summary-row">
             <span>Delivery Fee:</span>
-            <span id="checkoutDeliveryFee">₹60</span>
+            <span id="checkoutDeliveryFee">FREE</span>
           </div>
           <div class="checkout-summary-row checkout-total-row">
             <span>Total Payable:</span>
@@ -696,8 +770,26 @@
           <strong style="color: #5F259F;">Online PhonePe UPI (7980883038)</strong>
         </div>
         <div class="success-detail-row">
+          <span>Total Paid:</span>
+          <strong id="successTotalPaidDisplay" style="color: #15803d; font-size: 1.05rem;">₹0</strong>
+        </div>
+        <div class="success-detail-row">
           <span>Estimated Delivery:</span>
           <strong id="successDeliveryTimeline">7 to 10 business days</strong>
+        </div>
+      </div>
+
+      <!-- Download Official Invoice Box -->
+      <div class="success-invoice-box" style="margin: 16px 0; background: #fdf4ff; border: 1.5px dashed #c084fc; border-radius: 10px; padding: 14px 16px; text-align: center;">
+        <div style="font-weight: 700; color: #5F259F; font-size: 0.95rem; margin-bottom: 4px;">🧾 Official Tax Invoice Ready!</div>
+        <p style="font-size: 0.8rem; color: #6b21a8; margin-bottom: 12px; line-height: 1.4;">Your prepaid payment is verified. Download or print your official tax invoice now for your records.</p>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary" id="successDownloadInvoiceBtn" style="background: #5F259F; font-size: 0.85rem; padding: 10px 18px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>📥 Download Tax Invoice (PDF)</span>
+          </button>
+          <button type="button" class="btn btn-secondary" id="successViewInvoiceOnlineBtn" style="font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>👁️ View & Print Invoice</span>
+          </button>
         </div>
       </div>
 
@@ -705,7 +797,23 @@
         <a id="whatsappConfirmBtn" href="#" target="_blank" class="btn-whatsapp-confirm">
           <span>💬 Send Order Receipt on WhatsApp</span>
         </a>
-        <button class="btn btn-primary btn-block" id="successCloseBtn" style="margin-top: 10px;">Continue Shopping</button>
+        <button class="btn btn-secondary btn-block" id="successCloseBtn" style="margin-top: 10px;">Continue Shopping</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Dedicated Fullscreen Invoice Modal (Printable) -->
+  <dialog class="fullscreen-invoice-dialog" id="fullInvoiceDialog" closedby="any" aria-labelledby="fullInvoiceTitle">
+    <div class="fullscreen-invoice-wrapper">
+      <div class="fullscreen-invoice-toolbar">
+        <h3 id="fullInvoiceTitle" style="margin: 0; font-size: 1.05rem; color: #1f2937;">📄 Official Tax Invoice Preview</h3>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-primary btn-sm" id="btnPrintFullscreenInvoice" style="background: #5F259F;">🖨️ Print / Save as PDF</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCloseFullscreenInvoice">&times; Close</button>
+        </div>
+      </div>
+      <div class="fullscreen-invoice-content" id="fullscreenInvoiceContent">
+        <!-- Rendered dynamically -->
       </div>
     </div>
   </dialog>

@@ -144,14 +144,16 @@ const state = {
   promoApplied: false,
   promoDiscount: 0.10, // 10%
   promoCode: 'HANDMADE10',
-  freeShippingThreshold: 1999, // Free shipping above ₹1,999
-  deliveryLocation: 'kolkata', // 'kolkata' (₹60), 'wb' (₹100), 'india' (₹150)
-  deliveryCharge: 60,
-  deliveryRegionName: 'Kolkata Metropolitan Area',
+  freeShippingThreshold: 0,
+  deliveryLocation: 'kolkata', // 'kolkata' (FREE), 'wb' (₹100), 'india' (₹150)
+  deliveryCharge: 0,
+  deliveryRegionName: 'Kolkata (Free Delivery)',
   deliveryTimeline: '7 to 10 business days',
   estimatedDates: '',
   currentUser: JSON.parse(localStorage.getItem('rsa_user') || 'null')
 };
+
+let lastConfirmedOrder = null;
 
 // DOM Selectors
 const productGrid = document.getElementById('productGrid');
@@ -224,6 +226,9 @@ const custZip = document.getElementById('custZip');
 const successDialog = document.getElementById('successDialog');
 const successCloseBtn = document.getElementById('successCloseBtn');
 const successOrderNumber = document.getElementById('successOrderNumber');
+
+// Fullscreen Invoice Dialog
+const fullInvoiceDialog = document.getElementById('fullInvoiceDialog');
 
 // Auth & User Account DOM
 const accountHeaderBtn = document.getElementById('accountHeaderBtn');
@@ -355,6 +360,7 @@ setupDialogLightDismiss(checkoutDialog);
 setupDialogLightDismiss(successDialog);
 setupDialogLightDismiss(authDialog);
 setupDialogLightDismiss(addressDialog);
+setupDialogLightDismiss(fullInvoiceDialog);
 
 // ==========================================================================
 // Safe HTML Escaping Helper
@@ -523,6 +529,7 @@ async function updateShippingCalculation(city = 'Kolkata', pincode = '700001', s
       if (checkoutRegionTag) checkoutRegionTag.textContent = `📍 Detected: ${data.region}`;
       if (checkoutDeliveryDates) checkoutDeliveryDates.textContent = state.estimatedDates;
       updateCartUI();
+      updatePreOrderInvoice();
       return;
     }
   } catch (e) {
@@ -530,24 +537,27 @@ async function updateShippingCalculation(city = 'Kolkata', pincode = '700001', s
   }
 
   // Fallback local rule:
-  const isKolkata = city.toLowerCase().includes('kolkata') || pincode.startsWith('700');
-  const isWB = pincode.startsWith('7') || stateName.toLowerCase().includes('bengal');
+  const cityClean = (city || '').trim().toLowerCase();
+  const pinClean = (pincode || '').trim();
+  const stateClean = (stateName || '').trim().toLowerCase();
 
-  if (subtotal >= state.freeShippingThreshold) {
-    state.deliveryCharge = 0;
-  } else if (isKolkata) {
-    state.deliveryCharge = 60;
-    state.deliveryRegionName = 'Kolkata Metropolitan Area';
+  const isKolkata = cityClean.includes('kolkata') || cityClean.includes('calcutta') || pinClean.startsWith('700');
+  const isWB = stateClean.includes('bengal') || pinClean.startsWith('71') || pinClean.startsWith('72') || pinClean.startsWith('73') || pinClean.startsWith('74');
+
+  if (isKolkata) {
+    state.deliveryCharge = 0; // FREE Delivery for Kolkata!
+    state.deliveryRegionName = 'Kolkata (Free Delivery)';
   } else if (isWB) {
-    state.deliveryCharge = 100;
+    state.deliveryCharge = 100; // Flat ₹100 for West Bengal outside Kolkata
     state.deliveryRegionName = 'West Bengal (Outside Kolkata)';
   } else {
-    state.deliveryCharge = 150;
-    state.deliveryRegionName = 'Rest of India';
+    state.deliveryCharge = 150; // Flat ₹150 for outside Bengal (Rest of India)
+    state.deliveryRegionName = 'Outside Bengal (Rest of India)';
   }
 
   if (checkoutRegionTag) checkoutRegionTag.textContent = `📍 Detected: ${state.deliveryRegionName}`;
   updateCartUI();
+  updatePreOrderInvoice();
 }
 
 // ==========================================================================
@@ -692,31 +702,38 @@ function updateCartUI() {
   cartSubtotal.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
   if (checkoutSubtotal) checkoutSubtotal.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
 
-  // Free shipping tracker (Threshold: ₹1,999)
-  const freeThreshold = state.freeShippingThreshold;
+  // Free shipping & Regional Delivery Policy
+  // Policy: Kolkata = FREE (₹0), West Bengal = ₹100, Outside Bengal = ₹150
+  const isKolkata = (state.deliveryRegionName || '').toLowerCase().includes('kolkata');
+  const isWb = (state.deliveryRegionName || '').toLowerCase().includes('bengal');
   let effectiveShipping = state.deliveryCharge;
 
-  if (subtotal >= freeThreshold && subtotal > 0) {
+  if (isKolkata) {
     trackerFill.style.width = '100%';
-    freeShippingText.innerHTML = '🎉 <strong>Free Doorstep Delivery Unlocked!</strong>';
+    freeShippingText.innerHTML = '🎉 <strong>Kolkata Special: FREE Doorstep Delivery (₹0)!</strong>';
     cartShipping.textContent = 'FREE';
     cartShipping.style.color = 'var(--color-sage)';
     effectiveShipping = 0;
+  } else if (isWb) {
+    trackerFill.style.width = '100%';
+    freeShippingText.innerHTML = '📍 <strong>West Bengal: Flat ₹100 Delivery</strong> (Free in Kolkata only)';
+    cartShipping.textContent = subtotal === 0 ? '₹0' : '₹100';
+    cartShipping.style.color = 'var(--text-main)';
+    effectiveShipping = 100;
   } else {
-    const diff = freeThreshold - subtotal;
-    const pct = Math.min(100, Math.max(0, (subtotal / freeThreshold) * 100));
-    trackerFill.style.width = `${pct}%`;
-    freeShippingText.textContent = `Add ₹${diff.toLocaleString('en-IN')} more to unlock Free Delivery!`;
-    cartShipping.textContent = subtotal === 0 ? '₹0' : `₹${effectiveShipping}`;
-    cartShipping.style.color = 'var(--text-muted)';
+    trackerFill.style.width = '100%';
+    freeShippingText.innerHTML = '📍 <strong>Outside Bengal: Flat ₹150 Delivery</strong> (Free in Kolkata only)';
+    cartShipping.textContent = subtotal === 0 ? '₹0' : '₹150';
+    cartShipping.style.color = 'var(--text-main)';
+    effectiveShipping = 150;
   }
 
   // Label based on destination
   if (cartShippingLabel) {
-    cartShippingLabel.textContent = `Delivery (${state.deliveryRegionName.split(' ')[0]})`;
+    cartShippingLabel.textContent = isKolkata ? 'Delivery (Kolkata FREE)' : `Delivery (${state.deliveryRegionName.split(' ')[0]})`;
   }
   if (checkoutDeliveryFee) {
-    checkoutDeliveryFee.textContent = effectiveShipping === 0 ? 'FREE' : `₹${effectiveShipping}`;
+    checkoutDeliveryFee.textContent = effectiveShipping === 0 ? 'FREE (₹0)' : `₹${effectiveShipping}`;
   }
 
   // Discount Calculation (Promo code HANDMADE10 for 10% off)
@@ -758,6 +775,9 @@ function updateCartUI() {
   if (openUpiAppBtn) {
     openUpiAppBtn.href = `upi://pay?pa=7980883038@ybl&pn=RSA%20Creations&cu=INR&am=${grandTotal}`;
   }
+
+  // Automatically update on-screen pre-order invoice
+  updatePreOrderInvoice();
 }
 
 function addToCart(productId, quantity = 1) {
@@ -880,22 +900,23 @@ document.addEventListener('DOMContentLoaded', () => {
     cartDestinationSelect.addEventListener('change', (e) => {
       const val = e.target.value;
       if (val === 'kolkata') {
-        state.deliveryCharge = 60;
-        state.deliveryRegionName = 'Kolkata Metropolitan Area';
+        state.deliveryCharge = 0; // FREE for Kolkata!
+        state.deliveryRegionName = 'Kolkata (Free Delivery)';
         custCity.value = 'Kolkata';
         custZip.value = '700001';
       } else if (val === 'wb') {
         state.deliveryCharge = 100;
         state.deliveryRegionName = 'West Bengal (Outside Kolkata)';
-        custCity.value = 'Siliguri / Durgapur';
+        custCity.value = 'Siliguri';
         custZip.value = '734001';
       } else {
         state.deliveryCharge = 150;
-        state.deliveryRegionName = 'Rest of India';
-        custCity.value = 'Delhi / Mumbai / Bangalore';
+        state.deliveryRegionName = 'Outside Bengal (Rest of India)';
+        custCity.value = 'New Delhi';
         custZip.value = '110001';
       }
       updateCartUI();
+      updatePreOrderInvoice();
     });
   }
 
@@ -1047,6 +1068,473 @@ document.addEventListener('DOMContentLoaded', () => {
     quickViewDialog.close();
   });
 
+  // Helper: Build Pre-Order Draft Object for Invoice Preview
+  function getPreOrderDraft() {
+    const fn = (document.getElementById('custFirstName')?.value || '').trim();
+    const ln = (document.getElementById('custLastName')?.value || '').trim();
+    const fullName = `${fn} ${ln}`.trim() || state.currentUser?.name || 'Customer';
+    const phone = (document.getElementById('custPhone')?.value || '').trim() || state.currentUser?.mobile || '';
+    const email = (document.getElementById('custEmail')?.value || '').trim() || state.currentUser?.email || '';
+    const address = (document.getElementById('custAddress')?.value || '').trim() || 'Address entered in form';
+    const city = (document.getElementById('custCity')?.value || '').trim() || 'Kolkata';
+    const pincode = (document.getElementById('custZip')?.value || '').trim() || '700001';
+    const upiTxn = (document.getElementById('checkoutUpiTxn')?.value || '').trim();
+
+    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = state.promoApplied ? Math.round(subtotal * state.promoDiscount) : 0;
+    const totalAmount = Math.max(0, subtotal - discount + (subtotal === 0 ? 0 : state.deliveryCharge));
+
+    return {
+      orderId: `PRE-RSA-${Date.now().toString().slice(-6)}`,
+      createdAt: new Date().toISOString(),
+      isDraft: true,
+      customer: {
+        name: fullName,
+        phone,
+        email,
+        address,
+        city,
+        pincode,
+        state: state.deliveryRegionName.includes('Kolkata') ? 'West Bengal' : (state.deliveryRegionName.includes('West Bengal') ? 'West Bengal' : 'India')
+      },
+      items: state.cart.map(i => ({
+        id: i.id,
+        title: i.name,
+        price: i.price,
+        quantity: i.quantity,
+        lineTotal: i.price * i.quantity
+      })),
+      pricing: {
+        subtotal,
+        discount,
+        couponCode: state.promoApplied ? 'HANDMADE10' : null,
+        deliveryCharge: state.deliveryCharge,
+        deliveryRegion: state.deliveryRegionName,
+        totalAmount
+      },
+      payment: {
+        method: 'Online PhonePe UPI (7980883038)',
+        transactionId: upiTxn || 'Awaiting UTR Entry'
+      },
+      delivery: {
+        timeline: state.deliveryTimeline || '7 to 10 business days',
+        estimatedDateRange: state.estimatedDates || 'Within 7-10 days'
+      }
+    };
+  }
+
+  // Helper: Update On-Screen Pre-Order Tax Invoice Preview
+  function updatePreOrderInvoice() {
+    const custNameEl = document.getElementById('preInvCustName');
+    const custContactEl = document.getElementById('preInvCustContact');
+    const custAddressEl = document.getElementById('preInvCustAddress');
+    const itemsBodyEl = document.getElementById('preInvItemsBody');
+    const subtotalEl = document.getElementById('preInvSubtotal');
+    const discountRowEl = document.getElementById('preInvDiscountRow');
+    const discountEl = document.getElementById('preInvDiscount');
+    const shippingLabelEl = document.getElementById('preInvShippingLabel');
+    const shippingNoteEl = document.getElementById('preInvShippingNote');
+    const deliveryFeeEl = document.getElementById('preInvDeliveryFee');
+    const grandTotalEl = document.getElementById('preInvGrandTotal');
+    const utrBadgeEl = document.getElementById('preInvUtrBadge');
+
+    if (!itemsBodyEl) return;
+
+    const fn = (document.getElementById('custFirstName')?.value || '').trim();
+    const ln = (document.getElementById('custLastName')?.value || '').trim();
+    const fullName = `${fn} ${ln}`.trim() || state.currentUser?.name || 'Customer (Fill details above)';
+    const phone = (document.getElementById('custPhone')?.value || '').trim() || state.currentUser?.mobile || 'Pending';
+    const email = (document.getElementById('custEmail')?.value || '').trim() || state.currentUser?.email || '';
+    const street = (document.getElementById('custAddress')?.value || '').trim();
+    const city = (document.getElementById('custCity')?.value || '').trim() || 'Kolkata';
+    const zip = (document.getElementById('custZip')?.value || '').trim() || '700001';
+    const upiTxn = (document.getElementById('checkoutUpiTxn')?.value || '').trim();
+
+    if (custNameEl) custNameEl.textContent = fullName;
+    if (custContactEl) custContactEl.textContent = `Mobile: +91 ${phone}${email ? ' • ' + email : ''}`;
+    if (custAddressEl) custAddressEl.textContent = street ? `${street}, ${city} - ${zip}` : `City: ${city} (${zip}) • Street address pending`;
+
+    // Render items rows
+    if (state.cart.length === 0) {
+      itemsBodyEl.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 10px;">No items in cart</td></tr>`;
+    } else {
+      itemsBodyEl.innerHTML = state.cart.map(item => `
+        <tr>
+          <td><strong>${item.name}</strong></td>
+          <td style="text-align: center;">${item.quantity}</td>
+          <td style="text-align: right;">₹${item.price.toLocaleString('en-IN')}</td>
+          <td style="text-align: right; font-weight: 600;">₹${(item.price * item.quantity).toLocaleString('en-IN')}</td>
+        </tr>
+      `).join('');
+    }
+
+    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (subtotalEl) subtotalEl.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+
+    let discountAmount = 0;
+    if (state.promoApplied && subtotal > 0) {
+      discountAmount = Math.round(subtotal * state.promoDiscount);
+      if (discountRowEl) discountRowEl.style.display = 'flex';
+      if (discountEl) discountEl.textContent = `-₹${discountAmount.toLocaleString('en-IN')}`;
+    } else {
+      if (discountRowEl) discountRowEl.style.display = 'none';
+    }
+
+    const isKolkata = (state.deliveryRegionName || '').toLowerCase().includes('kolkata');
+    const isWb = (state.deliveryRegionName || '').toLowerCase().includes('bengal');
+
+    if (isKolkata) {
+      if (shippingLabelEl) shippingLabelEl.textContent = 'Delivery Charges (Kolkata Special):';
+      if (deliveryFeeEl) {
+        deliveryFeeEl.textContent = 'FREE (₹0)';
+        deliveryFeeEl.style.color = '#15803d';
+      }
+      if (shippingNoteEl) shippingNoteEl.textContent = '🎉 100% Free Doorstep Delivery across Kolkata!';
+    } else if (isWb) {
+      if (shippingLabelEl) shippingLabelEl.textContent = 'Delivery Charges (West Bengal):';
+      if (deliveryFeeEl) {
+        deliveryFeeEl.textContent = `₹${state.deliveryCharge}`;
+        deliveryFeeEl.style.color = '#4b5563';
+      }
+      if (shippingNoteEl) shippingNoteEl.textContent = '📍 West Bengal flat delivery: ₹100 (Free in Kolkata only)';
+    } else {
+      if (shippingLabelEl) shippingLabelEl.textContent = 'Delivery Charges (Outside Bengal):';
+      if (deliveryFeeEl) {
+        deliveryFeeEl.textContent = `₹${state.deliveryCharge}`;
+        deliveryFeeEl.style.color = '#4b5563';
+      }
+      if (shippingNoteEl) shippingNoteEl.textContent = '📍 Outside Bengal flat delivery: ₹150 (Free in Kolkata only)';
+    }
+
+    const grandTotal = Math.max(0, subtotal - discountAmount + (subtotal === 0 ? 0 : state.deliveryCharge));
+    if (grandTotalEl) grandTotalEl.textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+
+    if (utrBadgeEl) {
+      if (upiTxn.length >= 8) {
+        utrBadgeEl.textContent = `✅ UTR: ${upiTxn}`;
+        utrBadgeEl.className = 'utr-status-pill verified';
+      } else {
+        utrBadgeEl.textContent = '⚠️ UTR: Required';
+        utrBadgeEl.className = 'utr-status-pill';
+      }
+    }
+  }
+
+  // Helper: Generate Full HTML String for Official Tax Invoice
+  function generateOrderInvoiceHtmlString(order, isDraft = false) {
+    const isKolkata = (order.pricing?.deliveryRegion || '').toLowerCase().includes('kolkata');
+    const isWb = (order.pricing?.deliveryRegion || '').toLowerCase().includes('bengal');
+    const deliveryLabel = isKolkata 
+      ? 'Delivery Charges (Kolkata Special - FREE)' 
+      : (isWb ? 'Delivery Charges (West Bengal - Outside Kolkata)' : 'Delivery Charges (Outside Bengal - Pan India)');
+
+    const itemsRows = (order.items || []).map((item, idx) => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${idx + 1}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">
+          <strong>${item.title || item.name || 'Handcrafted Artisan Item'}</strong>
+          <div style="font-size: 11px; color: #6b7280;">SKU: ${item.id} • Handcrafted in Bengal</div>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${(item.price || 0).toLocaleString('en-IN')}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">₹${((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}</td>
+      </tr>
+    `).join('');
+
+    const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) : new Date().toLocaleDateString('en-IN');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tax Invoice - ${order.orderId} - RSA Creations</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1f2937;
+      background: #f3f4f6;
+      padding: 24px;
+    }
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 36px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e5e7eb;
+    }
+    .inv-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #5F259F;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+    .inv-logo-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .inv-logo-mark {
+      background: #5F259F;
+      color: #fff;
+      font-weight: 800;
+      font-size: 20px;
+      padding: 8px 14px;
+      border-radius: 8px;
+    }
+    .inv-brand-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1f2937;
+    }
+    .tax-inv-pill {
+      background: #f5f3ff;
+      color: #5F259F;
+      border: 1px solid #ddd6fe;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .inv-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #fafaf9;
+      border-radius: 8px;
+    }
+    .inv-info-block h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #7c3aed;
+      margin-bottom: 6px;
+    }
+    .inv-info-block p {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+    .inv-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 13px;
+    }
+    .inv-table th {
+      background: #f9fafb;
+      color: #374151;
+      padding: 10px;
+      text-align: left;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .inv-totals-box {
+      margin-left: auto;
+      width: 340px;
+      margin-bottom: 24px;
+    }
+    .inv-total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .inv-total-row.grand-total {
+      border-top: 2px solid #111827;
+      border-bottom: 2px solid #111827;
+      padding: 10px 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #111827;
+    }
+    .payment-box {
+      background: #fdf4ff;
+      border: 1px solid #f0abfc;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stamp-box {
+      border: 2px dashed #5F259F;
+      color: #5F259F;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .btn-print {
+      background: #5F259F;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .invoice-container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
+      .action-bar { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="inv-top-bar">
+      <div class="inv-logo-box">
+        <span class="inv-logo-mark">RSA</span>
+        <div>
+          <div class="inv-brand-name">RSA CREATIONS</div>
+          <div style="font-size: 12px; color: #6b7280;">Handcrafted Studio • Kolkata</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span class="tax-inv-pill">${isDraft ? 'Provisional Bill Preview' : 'Official Tax Invoice'}</span>
+        <div style="font-weight: 700; font-size: 15px;">Invoice #${order.orderId}</div>
+        <div style="font-size: 12px; color: #6b7280;">Date: ${orderDate}</div>
+      </div>
+    </div>
+
+    <div class="inv-info-grid">
+      <div class="inv-info-block">
+        <h4>Sold & Dispatched By:</h4>
+        <p><strong>RSA Creations Artisan Studio</strong></p>
+        <p>Kolkata, West Bengal - 700001</p>
+        <p>PhonePe / WhatsApp: +91 7980883038</p>
+        <p style="font-size: 11px; color: #6b7280;">State: West Bengal (Code: 19)</p>
+      </div>
+      <div class="inv-info-block">
+        <h4>Billed & Shipped To:</h4>
+        <p><strong>${order.customer?.name || 'Customer'}</strong></p>
+        <p>${order.customer?.address || 'Address provided'}</p>
+        <p>${order.customer?.city || ''}${order.customer?.pincode ? ' - ' + order.customer.pincode : ''}</p>
+        <p>${order.customer?.state || 'India'}</p>
+        <p>Phone: +91 ${order.customer?.phone || ''}</p>
+      </div>
+    </div>
+
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">#</th>
+          <th>Item Description</th>
+          <th style="width: 60px; text-align: center;">Qty</th>
+          <th style="width: 100px; text-align: right;">Price</th>
+          <th style="width: 110px; text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+
+    <div class="inv-totals-box">
+      <div class="inv-total-row">
+        <span>Items Subtotal:</span>
+        <span>₹${(order.pricing?.subtotal || 0).toLocaleString('en-IN')}</span>
+      </div>
+      ${order.pricing?.discount > 0 ? `
+      <div class="inv-total-row" style="color: #16a34a;">
+        <span>Artisan Coupon (${order.pricing?.couponCode || 'HANDMADE10'}):</span>
+        <span>-₹${order.pricing.discount.toLocaleString('en-IN')}</span>
+      </div>` : ''}
+      <div class="inv-total-row">
+        <span>${deliveryLabel}:</span>
+        <strong style="color: ${order.pricing?.deliveryCharge === 0 ? '#15803d' : '#1f2937'};">
+          ${order.pricing?.deliveryCharge === 0 ? 'FREE (₹0)' : '₹' + (order.pricing?.deliveryCharge || 0)}
+        </strong>
+      </div>
+      <div class="inv-total-row grand-total">
+        <span>Total Payable:</span>
+        <span style="color: #5F259F;">₹${(order.pricing?.totalAmount || 0).toLocaleString('en-IN')}</span>
+      </div>
+    </div>
+
+    <div class="payment-box">
+      <div>
+        <strong style="color: #86198f;">${isDraft ? '💳 Payment Mode' : '✅ 100% Online Payment Verified'}</strong>
+        <div style="font-size: 12px; color: #701a75; margin-top: 3px;">
+          Mode: ${order.payment?.method || 'Online PhonePe UPI (7980883038)'}<br>
+          UTR / Ref: <code>${order.payment?.transactionId || 'Entered at Checkout'}</code>
+        </div>
+      </div>
+      <div class="stamp-box">
+        ${isDraft ? 'PRE-ORDER<br>VERIFICATION' : 'PAID IN FULL<br>RSA CREATIONS'}
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 14px; display: flex; justify-content: space-between; font-size: 11px; color: #6b7280;">
+      <div>Estimated Delivery: ${order.delivery?.timeline || '7 to 10 business days'}</div>
+      <div>Authorized Signatory • RSA Creations Kolkata</div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+</body>
+</html>`;
+  }
+
+  // Helper: Open Fullscreen Invoice Modal
+  function openFullscreenInvoiceModal(order, isDraft = false) {
+    if (!fullInvoiceDialog) return;
+    const contentEl = document.getElementById('fullscreenInvoiceContent');
+    if (contentEl) {
+      contentEl.innerHTML = generateOrderInvoiceHtmlString(order, isDraft);
+    }
+    fullInvoiceDialog.showModal();
+  }
+
+  // Helper: Download Official Invoice HTML file & trigger Print Dialog
+  function downloadTaxInvoice(order) {
+    if (!order) return;
+    const invoiceHtml = generateOrderInvoiceHtmlString(order, false);
+    const blob = new Blob([invoiceHtml], { type: 'text/html;charset=utf-8' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `RSA_Invoice_${order.orderId || 'Order'}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(downloadUrl);
+
+    showToast(`📄 Invoice for ${order.orderId} downloaded! Opening print view...`, 'toast-success');
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(invoiceHtml);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 500);
+    }
+  }
+
   // Helper to render order items preview in checkout dialog
   function renderCheckoutItemsReview() {
     const list = document.getElementById('checkoutItemsList');
@@ -1096,6 +1584,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const zipInput = document.getElementById('custZip');
     updateShippingCalculation((cityInput && cityInput.value) || 'Kolkata', (zipInput && zipInput.value) || '700001');
 
+    // Update on-screen pre-order invoice preview
+    updatePreOrderInvoice();
+
     checkoutDialog.showModal();
   });
 
@@ -1103,11 +1594,16 @@ document.addEventListener('DOMContentLoaded', () => {
     checkoutDialog.close();
   });
 
-  // Listen for City / Pincode changes in Checkout to dynamically recalculate
-  [custCity, custZip].forEach(input => {
+  // Listen for Customer Details & Address / Pincode changes in Checkout to dynamically recalculate
+  ['custFirstName', 'custLastName', 'custPhone', 'custEmail', 'custAddress', 'custCity', 'custZip', 'checkoutUpiTxn'].forEach(id => {
+    const input = document.getElementById(id);
     if (input) {
       input.addEventListener('input', () => {
-        updateShippingCalculation(custCity.value, custZip.value);
+        if (id === 'custCity' || id === 'custZip') {
+          updateShippingCalculation(custCity.value, custZip.value);
+        } else {
+          updatePreOrderInvoice();
+        }
         const badge = document.getElementById('placeOrderAmountBadge');
         if (badge && checkoutTotalAmount) {
           badge.textContent = checkoutTotalAmount.textContent;
@@ -1115,6 +1611,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
+
+  // Fullscreen Invoice Preview Button in Checkout Modal (Before Confirming)
+  const btnPreviewFullInvoice = document.getElementById('btnPreviewFullInvoice');
+  if (btnPreviewFullInvoice) {
+    btnPreviewFullInvoice.addEventListener('click', () => {
+      const draftOrder = getPreOrderDraft();
+      openFullscreenInvoiceModal(draftOrder, true);
+    });
+  }
+
+  const btnCloseFullscreenInvoice = document.getElementById('btnCloseFullscreenInvoice');
+  if (btnCloseFullscreenInvoice && fullInvoiceDialog) {
+    btnCloseFullscreenInvoice.addEventListener('click', () => {
+      fullInvoiceDialog.close();
+    });
+  }
+
+  const btnPrintFullscreenInvoice = document.getElementById('btnPrintFullscreenInvoice');
+  if (btnPrintFullscreenInvoice) {
+    btnPrintFullscreenInvoice.addEventListener('click', () => {
+      window.print();
+    });
+  }
 
   // Checkout Form Submission (Sends real POST /api/orders to backend)
   checkoutForm.addEventListener('submit', async (e) => {
@@ -1202,9 +1721,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success && data.order) {
         confirmedOrderId = data.order.orderId;
+        lastConfirmedOrder = data.order;
         if (data.order.pricing && data.order.pricing.totalAmount) {
-          confirmedTotal = `₹${data.order.pricing.totalAmount}`;
+          confirmedTotal = `₹${data.order.pricing.totalAmount.toLocaleString('en-IN')}`;
         }
+      } else {
+        lastConfirmedOrder = {
+          orderId: confirmedOrderId || 'RSA-KOL-SUCCESS',
+          createdAt: new Date().toISOString(),
+          customer: {
+            name: `${firstName} ${lastName}`.trim(),
+            phone,
+            email,
+            address,
+            city,
+            pincode,
+            state: state.deliveryRegionName.includes('Kolkata') ? 'West Bengal' : 'India'
+          },
+          items: [...state.cart],
+          pricing: {
+            subtotal,
+            discount: state.promoApplied ? Math.round(subtotal * state.promoDiscount) : 0,
+            couponCode: state.promoApplied ? 'HANDMADE10' : null,
+            deliveryCharge: state.deliveryCharge,
+            deliveryRegion: state.deliveryRegionName,
+            totalAmount: parseInt(confirmedTotal.replace(/[^\d]/g, ''), 10) || subtotal
+          },
+          payment: {
+            method: 'Online PhonePe UPI (7980883038)',
+            transactionId: upiTxn || 'Verified Online'
+          },
+          delivery: {
+            timeline: state.deliveryTimeline || '7 to 10 business days',
+            estimatedDateRange: state.estimatedDates || 'Within 7-10 days'
+          }
+        };
       }
     } catch (err) {
       showToast('Network error while verifying payment. Please ensure your internet is active.', 'toast');
@@ -1224,6 +1775,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Populate success dialog details
     if (successOrderNumber) successOrderNumber.textContent = confirmedOrderId;
+    const successTotalPaidDisplay = document.getElementById('successTotalPaidDisplay');
+    if (successTotalPaidDisplay) successTotalPaidDisplay.textContent = confirmedTotal;
+
     const deliveryTimelineEl = document.getElementById('successDeliveryTimeline');
     if (deliveryTimelineEl) {
       deliveryTimelineEl.textContent = state.estimatedDates ? `${state.estimatedDates} (7 to 10 days)` : '7 to 10 business days';
@@ -1246,6 +1800,27 @@ document.addEventListener('DOMContentLoaded', () => {
     successDialog.showModal();
     showToast(`Order ${confirmedOrderId} confirmed successfully! 🎉`, 'toast-success');
   });
+
+  // Success Dialog Action Handlers
+  const successDownloadInvoiceBtn = document.getElementById('successDownloadInvoiceBtn');
+  if (successDownloadInvoiceBtn) {
+    successDownloadInvoiceBtn.addEventListener('click', () => {
+      if (lastConfirmedOrder) {
+        downloadTaxInvoice(lastConfirmedOrder);
+      } else {
+        showToast('Invoice is ready! Fetching order details...', 'toast');
+      }
+    });
+  }
+
+  const successViewInvoiceOnlineBtn = document.getElementById('successViewInvoiceOnlineBtn');
+  if (successViewInvoiceOnlineBtn) {
+    successViewInvoiceOnlineBtn.addEventListener('click', () => {
+      if (lastConfirmedOrder) {
+        openFullscreenInvoiceModal(lastConfirmedOrder, false);
+      }
+    });
+  }
 
   successCloseBtn.addEventListener('click', () => {
     successDialog.close();
