@@ -693,26 +693,227 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-// 8.1 POST /api/auth/recover-id - Find user account & User ID by 10-digit mobile number
-app.post('/api/auth/recover-id', (req, res) => {
-  try {
-    const { mobile } = req.body;
-    const cleanMobile = (mobile || '').replace(/\D/g, '');
+// In-memory OTP storage for OTP Login & Password Reset (TTL: 10 minutes)
+const otpStore = new Map();
 
-    if (!cleanMobile || !/^[6-9]\d{9}$/.test(cleanMobile)) {
+function getOtpKey(identifier, purpose = 'general') {
+  if (!identifier) return '';
+  const clean = identifier.includes('@') ? identifier.trim().toLowerCase() : identifier.replace(/\D/g, '');
+  return `${purpose}:${clean}`;
+}
+
+// 8.1 POST /api/auth/send-otp - Generate & Send 6-digit OTP for Login or Password Reset
+app.post('/api/auth/send-otp', (req, res) => {
+  try {
+    const { identifier, purpose = 'login' } = req.body;
+    if (!identifier || !identifier.trim()) {
       return res.status(400).json({
         success: false,
-        error: 'Please enter a valid 10-digit Indian mobile number.'
+        error: 'Please enter your registered mobile number or email address.'
       });
     }
 
+    const trimmed = identifier.trim();
+    const cleanMobile = trimmed.replace(/\D/g, '');
+    const cleanEmail = trimmed.toLowerCase();
+
     const users = getUsers();
-    const user = users.find(u => u.mobile === cleanMobile);
+    const user = users.find(u => 
+      (cleanMobile.length === 10 && u.mobile === cleanMobile) ||
+      (u.email && u.email.toLowerCase() === cleanEmail)
+    );
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: `No account registered with mobile number ${cleanMobile}. Please check the number or sign up.`
+        error: `No registered account found for "${identifier}". Please check or sign up.`
+      });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    const key = getOtpKey(trimmed, purpose);
+    otpStore.set(key, {
+      otp,
+      expiresAt,
+      userId: user.userId,
+      identifier: trimmed,
+      purpose
+    });
+
+    console.log(`[AUTH OTP] Generated ${purpose.toUpperCase()} OTP for ${user.name} (${trimmed}): ${otp}`);
+
+    const destination = cleanMobile.length === 10 ? `mobile ${cleanMobile}` : `email ${cleanEmail}`;
+    return res.json({
+      success: true,
+      message: `OTP sent successfully to registered ${destination}!`,
+      otp, // Provided for instant simulation & seamless testing
+      expiresIn: 600,
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile
+      }
+    });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send OTP. Please try again.' });
+  }
+});
+
+// 8.2 POST /api/auth/verify-otp-login - Login customer using verified 6-digit OTP
+app.post('/api/auth/verify-otp-login', (req, res) => {
+  try {
+    const { identifier, otp } = req.body;
+    if (!identifier || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both identifier (mobile/email) and 6-digit OTP are required.'
+      });
+    }
+
+    const key = getOtpKey(identifier, 'login');
+    const stored = otpStore.get(key);
+
+    if (!stored) {
+      return res.status(400).json({
+        success: false,
+        error: 'No active OTP request found. Please click "Send OTP" first.'
+      });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      otpStore.delete(key);
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired. Please request a new OTP.'
+      });
+    }
+
+    if (stored.otp !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Incorrect OTP. Please enter the valid 6-digit OTP.'
+      });
+    }
+
+    // OTP verified successfully
+    otpStore.delete(key);
+
+    const users = getUsers();
+    const user = users.find(u => u.userId === stored.userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User account not found.' });
+    }
+
+    const { password: _, ...safeUser } = user;
+    console.log(`[OTP Login Success] User ${safeUser.name} (${safeUser.userId}) logged in via OTP`);
+
+    return res.json({
+      success: true,
+      message: `Welcome back, ${safeUser.name}! Logged in successfully.`,
+      user: safeUser
+    });
+  } catch (error) {
+    console.error('Verify OTP Login error:', error);
+    res.status(500).json({ success: false, error: 'An error occurred during OTP verification.' });
+  }
+});
+
+// 8.3 POST /api/auth/verify-otp-reset - Reset Password using verified 6-digit OTP
+app.post('/api/auth/verify-otp-reset', (req, res) => {
+  try {
+    const { identifier, otp, newPassword } = req.body;
+    if (!identifier || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Identifier, 6-digit OTP, and new password are all required.'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters long.'
+      });
+    }
+
+    const key = getOtpKey(identifier, 'reset_password');
+    const stored = otpStore.get(key);
+
+    if (!stored) {
+      return res.status(400).json({
+        success: false,
+        error: 'No active OTP request found. Please click "Send Reset OTP" first.'
+      });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      otpStore.delete(key);
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired. Please request a new OTP.'
+      });
+    }
+
+    if (stored.otp !== otp.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Incorrect OTP. Please enter the valid 6-digit OTP.'
+      });
+    }
+
+    // OTP is valid, proceed to update password
+    otpStore.delete(key);
+
+    const users = getUsers();
+    const userIndex = users.findIndex(u => u.userId === stored.userId);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ success: false, error: 'User account not found.' });
+    }
+
+    users[userIndex].password = newPassword;
+    users[userIndex].updatedAt = new Date().toISOString();
+    saveUsers(users);
+
+    const updatedUser = users[userIndex];
+    console.log(`[Password Reset via OTP] User ${updatedUser.name} (${updatedUser.userId}) reset password`);
+
+    const { password: _, ...safeUser } = updatedUser;
+    return res.json({
+      success: true,
+      message: 'Password reset successfully! You can now log in or continue.',
+      userId: updatedUser.userId,
+      user: safeUser
+    });
+  } catch (error) {
+    console.error('Verify OTP Reset error:', error);
+    res.status(500).json({ success: false, error: 'An error occurred while resetting password.' });
+  }
+});
+
+// 8.4 POST /api/auth/recover-id - Find user account & User ID by 10-digit mobile number or email
+app.post('/api/auth/recover-id', (req, res) => {
+  try {
+    const { mobile } = req.body;
+    const cleanMobile = (mobile || '').replace(/\D/g, '');
+    const cleanEmail = (mobile || '').trim().toLowerCase();
+
+    const users = getUsers();
+    const user = users.find(u => 
+      (cleanMobile.length === 10 && u.mobile === cleanMobile) ||
+      (u.email && u.email.toLowerCase() === cleanEmail)
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: `No account registered with ${mobile}. Please check or sign up.`
       });
     }
 
@@ -732,7 +933,7 @@ app.post('/api/auth/recover-id', (req, res) => {
   }
 });
 
-// 8.2 POST /api/auth/reset-password - Reset password using verified mobile number
+// 8.5 POST /api/auth/reset-password - Reset password using verified mobile number
 app.post('/api/auth/reset-password', (req, res) => {
   try {
     const { mobile, newPassword } = req.body;
