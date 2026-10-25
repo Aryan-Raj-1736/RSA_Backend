@@ -41,7 +41,7 @@
           <li><a href="#reviews" class="nav-link">Reviews</a></li>
           <li><a href="#contact" class="nav-link">Contact</a></li>
           <li><a href="/admin" class="nav-link" style="color: var(--color-terracotta); font-weight: 700;">⚙️ Admin Hub</a></li>
-          <li><a href="#" id="mobileNavLoginBtn" class="nav-link" style="color: #5F259F; font-weight: 700;">👤 Login / My Account</a></li>
+          <li><a href="#" id="mobileNavLoginBtn" onclick="window.handleAccountBtnClick(event)" class="nav-link" style="color: #5F259F; font-weight: 700;">👤 Login / My Account</a></li>
         </ul>
       </nav>
 
@@ -53,7 +53,7 @@
           </button>
         </div>
 
-          <button class="action-btn account-btn" id="accountHeaderBtn" aria-label="My Account">
+          <button class="action-btn account-btn" id="accountHeaderBtn" onclick="window.handleAccountBtnClick(event)" aria-label="My Account">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span class="account-label" id="accountLabel">Login</span>
           </button>
@@ -825,7 +825,7 @@
   <!-- Auth Login/Signup Dialog -->
   <dialog class="auth-dialog" id="authDialog" aria-labelledby="authDialogTitle">
     <div class="auth-wrapper">
-      <button class="dialog-close-btn" id="authCloseBtn" aria-label="Close">&times;</button>
+      <button class="dialog-close-btn" id="authCloseBtn" onclick="window.closeAuthModal(event)" aria-label="Close">&times;</button>
       <div class="auth-header">
         <span class="logo-mark">RSA</span>
         <h2 id="authDialogTitle">Welcome to RSA Creations</h2>
@@ -1026,7 +1026,7 @@
       </div>
     </div>
     <hr>
-    <button class="dropdown-item" id="dropdownLoginModalBtn" style="color: #5F259F; font-weight: 600;">🔑 Login / Switch Account</button>
+    <button class="dropdown-item" id="dropdownLoginModalBtn" onclick="window.openAuthModal('login')" style="color: #5F259F; font-weight: 600;">🔑 Login / Switch Account</button>
     <button class="dropdown-item" id="dropdownAddressBtn">📍 My Addresses</button>
     <button class="dropdown-item" id="dropdownOrdersBtn">📦 My Orders</button>
     <button class="dropdown-item logout-item" id="dropdownLogoutBtn">🚪 Logout</button>

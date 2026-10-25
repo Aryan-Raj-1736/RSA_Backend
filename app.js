@@ -360,7 +360,6 @@ function setupDialogLightDismiss(dialogElement) {
 setupDialogLightDismiss(quickViewDialog);
 setupDialogLightDismiss(checkoutDialog);
 setupDialogLightDismiss(successDialog);
-setupDialogLightDismiss(authDialog);
 setupDialogLightDismiss(addressDialog);
 setupDialogLightDismiss(fullInvoiceDialog);
 
@@ -465,25 +464,63 @@ function openAuthModal(mode = 'login') {
   try {
     switchAuthTab(mode);
     if (userDropdown) userDropdown.style.display = 'none';
-    if (authDialog) {
-      if (typeof authDialog.showModal === 'function') {
-        if (authDialog.open) {
-          authDialog.close();
-        }
-        authDialog.showModal();
-      } else {
-        authDialog.setAttribute('open', '');
-        authDialog.style.display = 'block';
+    const dlg = authDialog || document.getElementById('authDialog');
+    if (!dlg) return;
+
+    if (dlg.open) {
+      try { dlg.close(); } catch (e) {}
+    }
+
+    if (typeof dlg.showModal === 'function') {
+      try {
+        dlg.showModal();
+        return;
+      } catch (err) {
+        console.warn('showModal call failed, falling back:', err);
       }
     }
+    dlg.setAttribute('open', '');
+    dlg.style.display = 'block';
   } catch (err) {
-    console.warn('showModal fallback used:', err);
-    if (authDialog) {
-      authDialog.setAttribute('open', '');
-      authDialog.style.display = 'block';
+    console.warn('openAuthModal fallback:', err);
+    const dlg = authDialog || document.getElementById('authDialog');
+    if (dlg) {
+      dlg.setAttribute('open', '');
+      dlg.style.display = 'block';
     }
   }
 }
+
+// Global window helpers so button clicks never fail
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = function(e) {
+  if (e) {
+    try { e.preventDefault(); } catch (err) {}
+  }
+  const dlg = authDialog || document.getElementById('authDialog');
+  if (!dlg) return;
+  try {
+    if (dlg.open) dlg.close();
+  } catch (err) {}
+  dlg.removeAttribute('open');
+  dlg.style.display = 'none';
+};
+
+window.handleAccountBtnClick = function(e) {
+  if (e) {
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+    } catch (err) {}
+  }
+  const user = state.currentUser || JSON.parse(localStorage.getItem('rsa_user') || 'null');
+  if (user) {
+    const isVisible = userDropdown && userDropdown.style.display === 'flex';
+    if (userDropdown) userDropdown.style.display = isVisible ? 'none' : 'flex';
+  } else {
+    window.openAuthModal('login');
+  }
+};
 
 function renderSavedAddresses() {
   if (!addressCards) return;
@@ -908,7 +945,7 @@ function showToast(message, type = '') {
 // Event Listeners Initialization
 // ==========================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   computeDeliveryDateRange();
   renderProducts();
   updateCartUI();
@@ -1905,29 +1942,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auth Dialog Close
   if (authCloseBtn) {
-    authCloseBtn.addEventListener('click', () => {
-      try {
-        if (authDialog.open) authDialog.close();
-      } catch (err) {}
-      authDialog.removeAttribute('open');
-      authDialog.style.display = '';
+    authCloseBtn.addEventListener('click', (e) => {
+      window.closeAuthModal(e);
     });
   }
 
   // Close Auth Dialog when tapping backdrop
   if (authDialog) {
     authDialog.addEventListener('click', (e) => {
-      const rect = authDialog.getBoundingClientRect();
-      const isInDialog = (
-        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
-      );
-      if (!isInDialog) {
-        try {
-          if (authDialog.open) authDialog.close();
-        } catch (err) {}
-        authDialog.removeAttribute('open');
-        authDialog.style.display = '';
+      if (e.target === authDialog) {
+        window.closeAuthModal(e);
       }
     });
   }
@@ -2512,4 +2536,11 @@ document.addEventListener('DOMContentLoaded', () => {
       renderProducts();
     });
   });
-});
+}
+
+// Immediate execution safeguard if DOM is already ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
