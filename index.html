@@ -41,7 +41,7 @@
           <li><a href="#reviews" class="nav-link">Reviews</a></li>
           <li><a href="#contact" class="nav-link">Contact</a></li>
           <li><a href="/admin" class="nav-link" style="color: var(--color-terracotta); font-weight: 700;">⚙️ Admin Hub</a></li>
-          <li><a href="#" id="mobileNavLoginBtn" onclick="window.handleAccountBtnClick(event)" class="nav-link" style="color: #5F259F; font-weight: 700;">👤 Login / My Account</a></li>
+          <li><a href="#" id="mobileNavLoginBtn" class="nav-link" style="color: #5F259F; font-weight: 700;">👤 Login / My Account</a></li>
         </ul>
       </nav>
 
@@ -53,7 +53,7 @@
           </button>
         </div>
 
-          <button class="action-btn account-btn" id="accountHeaderBtn" onclick="window.handleAccountBtnClick(event)" aria-label="My Account">
+          <button class="action-btn account-btn" id="accountHeaderBtn" aria-label="My Account">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span class="account-label" id="accountLabel">Login</span>
           </button>
@@ -825,7 +825,7 @@
   <!-- Auth Login/Signup Dialog -->
   <dialog class="auth-dialog" id="authDialog" aria-labelledby="authDialogTitle">
     <div class="auth-wrapper">
-      <button class="dialog-close-btn" id="authCloseBtn" onclick="window.closeAuthModal(event)" aria-label="Close">&times;</button>
+      <button class="dialog-close-btn" id="authCloseBtn" aria-label="Close">&times;</button>
       <div class="auth-header">
         <span class="logo-mark">RSA</span>
         <h2 id="authDialogTitle">Welcome to RSA Creations</h2>
@@ -834,10 +834,10 @@
 
       <!-- Auth Tabs -->
       <div class="auth-tabs">
-        <button type="button" class="auth-tab active" id="loginTab" onclick="window.switchAuthTab('login')" data-tab="login">Password</button>
-        <button type="button" class="auth-tab" id="otpLoginTab" onclick="window.switchAuthTab('otpLogin')" data-tab="otpLogin">Login via OTP 📲</button>
-        <button type="button" class="auth-tab" id="recoveryTab" onclick="window.switchAuthTab('recovery')" data-tab="recovery">Forgot Password?</button>
-        <button type="button" class="auth-tab" id="signupTab" onclick="window.switchAuthTab('signup')" data-tab="signup">Sign Up</button>
+        <button type="button" class="auth-tab active" id="loginTab" data-tab="login">Password</button>
+        <button type="button" class="auth-tab" id="otpLoginTab" data-tab="otpLogin">Login via OTP 📲</button>
+        <button type="button" class="auth-tab" id="recoveryTab" data-tab="recovery">Forgot Password?</button>
+        <button type="button" class="auth-tab" id="signupTab" data-tab="signup">Sign Up</button>
       </div>
 
       <!-- Password Login Form -->
@@ -851,8 +851,8 @@
           <input type="password" id="loginPassword" required placeholder="Enter your password" minlength="6">
         </div>
         <div class="auth-helper-row" style="display: flex; justify-content: space-between; align-items: center;">
-          <a href="#" id="loginViaOtpLink" onclick="window.switchAuthTab('otpLogin'); return false;" class="auth-helper-link" style="color: #5F259F;">📲 Login via OTP instead</a>
-          <a href="#" id="forgotPasswordLink" onclick="window.switchAuthTab('recovery'); return false;" class="auth-helper-link">Forgot Password?</a>
+          <a href="#" id="loginViaOtpLink" class="auth-helper-link" style="color: #5F259F;">📲 Login via OTP instead</a>
+          <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
         </div>
         <div class="auth-error" id="loginError" style="display: none;"></div>
         <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">Login to My Account</button>
@@ -889,7 +889,7 @@
         <button type="submit" class="btn btn-primary btn-block" id="verifyLoginOtpBtn" style="display: none;">Verify OTP & Login</button>
 
         <div class="auth-helper-row" style="text-align: center; margin-top: 6px;">
-          <a href="#" id="backToPasswordLoginLink" onclick="window.switchAuthTab('login'); return false;" class="auth-helper-link">← Login with Password</a>
+          <a href="#" id="backToPasswordLoginLink" class="auth-helper-link">← Login with Password</a>
         </div>
       </form>
 
@@ -946,7 +946,7 @@
         <button type="submit" class="btn btn-primary btn-block" id="recoverySubmitBtn" style="display: none;">Verify OTP & Reset Password</button>
 
         <div class="auth-helper-row" style="text-align: center; margin-top: 6px;">
-          <a href="#" id="backToLoginLink" onclick="window.switchAuthTab('login'); return false;" class="auth-helper-link">← Back to Login</a>
+          <a href="#" id="backToLoginLink" class="auth-helper-link">← Back to Login</a>
         </div>
       </form>
 
@@ -978,7 +978,7 @@
   <!-- Address Dialog (shown after login if no address saved) -->
   <dialog class="auth-dialog address-dialog" id="addressDialog" aria-labelledby="addressDialogTitle">
     <div class="auth-wrapper">
-      <button class="dialog-close-btn" id="addressCloseBtn" onclick="document.getElementById('addressDialog').close()" aria-label="Close">&times;</button>
+      <button class="dialog-close-btn" id="addressCloseBtn" aria-label="Close">&times;</button>
       <div class="auth-header">
         <span class="logo-mark">RSA</span>
         <h2 id="addressDialogTitle">Add Delivery Address</h2>
@@ -1026,7 +1026,7 @@
       </div>
     </div>
     <hr>
-    <button class="dropdown-item" id="dropdownLoginModalBtn" onclick="window.openAuthModal('login')" style="color: #5F259F; font-weight: 600;">🔑 Login / Switch Account</button>
+    <button class="dropdown-item" id="dropdownLoginModalBtn" style="color: #5F259F; font-weight: 600;">🔑 Login / Switch Account</button>
     <button class="dropdown-item" id="dropdownAddressBtn">📍 My Addresses</button>
     <button class="dropdown-item" id="dropdownOrdersBtn">📦 My Orders</button>
     <button class="dropdown-item logout-item" id="dropdownLogoutBtn">🚪 Logout</button>

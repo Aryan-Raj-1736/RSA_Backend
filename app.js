@@ -468,7 +468,7 @@ function openAuthModal(mode = 'login') {
     if (!dlg) return;
 
     if (dlg.open) {
-      try { dlg.close(); } catch (e) {}
+      return;
     }
 
     if (typeof dlg.showModal === 'function') {
@@ -505,7 +505,9 @@ window.closeAuthModal = function(e) {
   const dlg = authDialog || document.getElementById('authDialog');
   if (!dlg) return;
   try {
-    if (dlg.open) dlg.close();
+    if (dlg.open && typeof dlg.close === 'function') {
+      dlg.close();
+    }
   } catch (err) {}
   dlg.removeAttribute('open');
   dlg.style.display = 'none';
@@ -520,8 +522,15 @@ window.handleAccountBtnClick = function(e) {
   }
   const user = state.currentUser || JSON.parse(localStorage.getItem('rsa_user') || 'null');
   if (user) {
-    const isVisible = userDropdown && userDropdown.style.display === 'flex';
-    if (userDropdown) userDropdown.style.display = isVisible ? 'none' : 'flex';
+    const isVisible = userDropdown && (userDropdown.style.display === 'flex' || getComputedStyle(userDropdown).display === 'flex');
+    if (userDropdown) {
+      userDropdown.style.display = isVisible ? 'none' : 'flex';
+      if (!isVisible) {
+        if (dropdownAvatar) dropdownAvatar.textContent = (user.name ? user.name[0] : 'U').toUpperCase();
+        if (dropdownName) dropdownName.textContent = user.name || 'Customer';
+        if (dropdownContact) dropdownContact.textContent = user.email || user.mobile || 'Customer';
+      }
+    }
   } else {
     window.openAuthModal('login');
   }
@@ -1199,7 +1208,7 @@ function renderProducts() {
 
           <div class="card-footer">
             <span class="card-price">₹${product.price.toLocaleString('en-IN')}</span>
-            <button type="button" class="add-cart-btn" onclick="window.addToCart('${product.id}', 1)" data-id="${product.id}">
+            <button type="button" class="add-cart-btn" data-id="${product.id}">
               Add to Basket
             </button>
           </div>
@@ -1893,40 +1902,30 @@ function initApp() {
 
   // Account button in header
   if (accountHeaderBtn) {
-    accountHeaderBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (state.currentUser) {
-        const isVisible = userDropdown.style.display === 'flex';
-        userDropdown.style.display = isVisible ? 'none' : 'flex';
-      } else {
-        openAuthModal('login');
-      }
-    });
+    accountHeaderBtn.onclick = (e) => {
+      window.handleAccountBtnClick(e);
+    };
   }
 
   // Mobile Nav Login button
   if (mobileNavLoginBtn) {
-    mobileNavLoginBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    mobileNavLoginBtn.onclick = (e) => {
       if (mainNav) mainNav.classList.remove('open');
       if (mobileNavToggle) mobileNavToggle.setAttribute('aria-expanded', 'false');
-      if (state.currentUser) {
-        const isVisible = userDropdown.style.display === 'flex';
-        userDropdown.style.display = isVisible ? 'none' : 'flex';
-      } else {
-        openAuthModal('login');
-      }
-    });
+      window.handleAccountBtnClick(e);
+    };
   }
 
   // Switch / Login Account button inside dropdown
   if (dropdownLoginModalBtn) {
-    dropdownLoginModalBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    dropdownLoginModalBtn.onclick = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       if (userDropdown) userDropdown.style.display = 'none';
       openAuthModal('login');
-    });
+    };
   }
 
   // Close dropdown on outside click
@@ -1943,9 +1942,9 @@ function initApp() {
 
   // Auth Dialog Close
   if (authCloseBtn) {
-    authCloseBtn.addEventListener('click', (e) => {
+    authCloseBtn.onclick = (e) => {
       window.closeAuthModal(e);
-    });
+    };
   }
 
   // Close Auth Dialog when tapping backdrop
@@ -1959,21 +1958,21 @@ function initApp() {
 
   // Address Dialog Close
   if (addressCloseBtn) {
-    addressCloseBtn.addEventListener('click', () => addressDialog.close());
+    addressCloseBtn.onclick = () => addressDialog.close();
   }
 
   // Auth Tabs (Login / OTP Login / Sign Up / Recovery)
   if (loginTab) {
-    loginTab.addEventListener('click', () => switchAuthTab('login'));
+    loginTab.onclick = () => switchAuthTab('login');
   }
   if (otpLoginTab) {
-    otpLoginTab.addEventListener('click', () => switchAuthTab('otpLogin'));
+    otpLoginTab.onclick = () => switchAuthTab('otpLogin');
   }
   if (signupTab) {
-    signupTab.addEventListener('click', () => switchAuthTab('signup'));
+    signupTab.onclick = () => switchAuthTab('signup');
   }
   if (recoveryTab) {
-    recoveryTab.addEventListener('click', () => switchAuthTab('recovery'));
+    recoveryTab.onclick = () => switchAuthTab('recovery');
   }
 
   // Quick switch links
@@ -2521,13 +2520,20 @@ function initApp() {
   }
 
   if (dropdownLogoutBtn) {
-    dropdownLogoutBtn.addEventListener('click', () => {
+    dropdownLogoutBtn.onclick = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       state.currentUser = null;
       localStorage.removeItem('rsa_user');
       updateAuthUI();
-      userDropdown.style.display = 'none';
+      if (userDropdown) userDropdown.style.display = 'none';
       showToast('You have been logged out.');
-    });
+      setTimeout(() => {
+        openAuthModal('login');
+      }, 300);
+    };
   }
 
   // Mobile navigation hamburger toggle
