@@ -1488,9 +1488,9 @@ app.get('/health', (req, res) => {
 // Admin Login
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
-  // Default Admin Credentials for RSA Creations Store Management
+  // Confidential Admin Credentials for RSA Creations Store Management
   const ADMIN_USER = process.env.ADMIN_USER || 'admin@rsacreations.com';
-  const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
+  const ADMIN_PASS = process.env.ADMIN_PASS || 'sarupa@2026';
 
   if (!username || !password) {
     return res.status(400).json({ success: false, error: 'Username/Email and Password are required.' });
@@ -1513,7 +1513,7 @@ app.post('/api/admin/login', (req, res) => {
 
   return res.status(401).json({
     success: false,
-    error: 'Invalid admin credentials. Use admin@rsacreations.com / admin123'
+    error: 'Invalid admin credentials. Access denied.'
   });
 });
 

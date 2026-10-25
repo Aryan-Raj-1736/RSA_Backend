@@ -18,7 +18,7 @@ const adminLoginForm = document.getElementById('adminLoginForm');
 const adminUsername = document.getElementById('adminUsername');
 const adminPassword = document.getElementById('adminPassword');
 const adminLoginError = document.getElementById('adminLoginError');
-const fillDemoBtn = document.getElementById('fillDemoBtn');
+const adminSubmitBtn = document.getElementById('adminSubmitBtn');
 const adminLogoutBtn = document.getElementById('adminLogoutBtn');
 
 // Tabs & Navigation
@@ -61,49 +61,103 @@ function showAdminToast(msg, type = 'success') {
 // ==========================================================================
 function checkAdminAuth() {
   const token = localStorage.getItem('rsa_admin_token');
+  const layout = document.querySelector('.admin-layout');
+  const header = document.querySelector('.admin-header');
+
   if (!token) {
-    if (adminAuthDialog) adminAuthDialog.showModal();
+    if (layout) layout.style.display = 'none';
+    if (header) header.style.display = 'none';
+    if (adminAuthDialog) {
+      if (typeof adminAuthDialog.showModal === 'function') {
+        if (!adminAuthDialog.open) adminAuthDialog.showModal();
+      } else {
+        adminAuthDialog.setAttribute('open', '');
+        adminAuthDialog.style.display = 'block';
+      }
+    }
     return false;
   }
+
+  if (layout) layout.style.display = 'grid';
+  if (header) header.style.display = 'flex';
   return true;
 }
 
-if (fillDemoBtn) {
-  fillDemoBtn.addEventListener('click', () => {
-    adminUsername.value = 'admin@rsacreations.com';
-    adminPassword.value = 'admin123';
+if (adminAuthDialog) {
+  // Prevent closing without authentication
+  adminAuthDialog.addEventListener('cancel', (e) => {
+    if (!localStorage.getItem('rsa_admin_token')) {
+      e.preventDefault();
+    }
   });
 }
 
 if (adminLoginForm) {
   adminLoginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    adminLoginError.style.display = 'none';
+    if (adminLoginError) adminLoginError.style.display = 'none';
+    const submitBtn = document.getElementById('adminSubmitBtn');
+    if (submitBtn) {
+      submitBtn.textContent = 'Verifying Confidential Access...';
+      submitBtn.disabled = true;
+    }
+
+    const username = (adminUsername?.value || '').trim();
+    const password = (adminPassword?.value || '');
+
+    if (!username || !password) {
+      if (adminLoginError) {
+        adminLoginError.textContent = 'Both Admin Username and Password are required.';
+        adminLoginError.style.display = 'block';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = 'Sign In to Admin Hub';
+        submitBtn.disabled = false;
+      }
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: adminUsername.value.trim(),
-          password: adminPassword.value
-        })
+        body: JSON.stringify({ username, password })
       });
       const data = await res.json();
 
       if (data.success && data.token) {
         localStorage.setItem('rsa_admin_token', data.token);
         localStorage.setItem('rsa_admin_info', JSON.stringify(data.admin));
-        adminAuthDialog.close();
+
+        const layout = document.querySelector('.admin-layout');
+        const header = document.querySelector('.admin-header');
+        if (layout) layout.style.display = 'grid';
+        if (header) header.style.display = 'flex';
+
+        if (adminAuthDialog) adminAuthDialog.close();
+        if (adminLoginForm) adminLoginForm.reset();
+
         showAdminToast('Welcome, Master Artisan Admin!');
         loadAllAdminData();
       } else {
-        adminLoginError.textContent = data.error || 'Authentication failed.';
-        adminLoginError.style.display = 'block';
+        const errorMsg = data.error || 'Authentication failed. Incorrect admin credentials.';
+        if (adminLoginError) {
+          adminLoginError.textContent = errorMsg;
+          adminLoginError.style.display = 'block';
+        }
+        showAdminToast(errorMsg, 'error');
       }
     } catch (err) {
-      adminLoginError.textContent = 'Server connection error.';
-      adminLoginError.style.display = 'block';
+      if (adminLoginError) {
+        adminLoginError.textContent = 'Server connection error. Please try again.';
+        adminLoginError.style.display = 'block';
+      }
+      showAdminToast('Could not connect to authentication server.', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.textContent = 'Sign In to Admin Hub';
+        submitBtn.disabled = false;
+      }
     }
   });
 }
@@ -112,10 +166,23 @@ if (adminLogoutBtn) {
   adminLogoutBtn.addEventListener('click', () => {
     localStorage.removeItem('rsa_admin_token');
     localStorage.removeItem('rsa_admin_info');
-    showAdminToast('Logged out of Admin Hub.');
+
+    const layout = document.querySelector('.admin-layout');
+    const header = document.querySelector('.admin-header');
+    if (layout) layout.style.display = 'none';
+    if (header) header.style.display = 'none';
+
+    showAdminToast('Logged out of Admin Hub.', 'info');
     setTimeout(() => {
-      adminAuthDialog.showModal();
-    }, 400);
+      if (adminAuthDialog) {
+        if (typeof adminAuthDialog.showModal === 'function') {
+          adminAuthDialog.showModal();
+        } else {
+          adminAuthDialog.setAttribute('open', '');
+          adminAuthDialog.style.display = 'block';
+        }
+      }
+    }, 200);
   });
 }
 

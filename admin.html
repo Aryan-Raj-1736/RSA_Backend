@@ -314,31 +314,22 @@
 
     <form class="modal-body" id="adminLoginForm">
       <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.4;">
-        Access RSA Creations orders management, shipping dispatch, customer directory, and product catalog controls.
+        Confidential Portal: Access RSA Creations orders management, shipping dispatch, customer directory, and catalog controls.
       </p>
 
       <div class="form-group">
         <label for="adminUsername">Admin Username or Email</label>
-        <input type="text" id="adminUsername" required placeholder="admin@rsacreations.com" value="admin@rsacreations.com">
+        <input type="text" id="adminUsername" required placeholder="e.g. admin@rsacreations.com" autocomplete="username">
       </div>
 
       <div class="form-group">
-        <label for="adminPassword">Password</label>
-        <input type="password" id="adminPassword" required placeholder="Enter admin password" value="admin123">
-      </div>
-
-      <div style="background: var(--bg-surface); padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.75rem; color: var(--color-amber);">
-        🔑 <strong>Default Master Credentials:</strong><br>
-        Email: <code>admin@rsacreations.com</code><br>
-        Password: <code>admin123</code>
-        <button type="button" class="btn btn-secondary btn-sm" id="fillDemoBtn" style="margin-top: 6px; width: 100%; justify-content: center;">
-          ⚡ Auto-Fill Demo Credentials
-        </button>
+        <label for="adminPassword">Admin Password</label>
+        <input type="password" id="adminPassword" required placeholder="Enter confidential password" autocomplete="current-password">
       </div>
 
       <div id="adminLoginError" style="display: none; background: var(--color-danger-light); color: var(--color-danger); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.75rem;"></div>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+      <button type="submit" class="btn btn-primary" id="adminSubmitBtn" style="width: 100%; justify-content: center; padding: 12px;">
         Sign In to Admin Hub
       </button>
     </form>
