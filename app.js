@@ -493,6 +493,11 @@ function openAuthModal(mode = 'login') {
 
 // Global window helpers so button clicks never fail
 window.openAuthModal = openAuthModal;
+window.switchAuthTab = switchAuthTab;
+window.addToCart = addToCart;
+window.openCartDrawer = openCartDrawer;
+window.closeCartDrawer = closeCartDrawer;
+window.toggleWishlist = toggleWishlist;
 window.closeAuthModal = function(e) {
   if (e) {
     try { e.preventDefault(); } catch (err) {}
@@ -549,586 +554,7 @@ function openAddressModal() {
   addressDialog.showModal();
 }
 
-// ==========================================================================
-// Backend API Integration
-// ==========================================================================
-
-async function fetchProductsFromBackend() {
-  try {
-    const res = await fetch(`${API_BASE}/api/products`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.products && data.products.length > 0) {
-        state.products = data.products;
-        renderProducts();
-      }
-    }
-  } catch (err) {
-    console.log('Using local catalog, backend offline:', err.message);
-  }
-}
-
-// Calculate shipping from backend API or local logic
-async function updateShippingCalculation(city = 'Kolkata', pincode = '700001', stateName = 'West Bengal') {
-  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  try {
-    const response = await fetch(`${API_BASE}/api/shipping/calculate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city, pincode, state: stateName, subtotal })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      state.deliveryCharge = data.deliveryCharge;
-      state.deliveryRegionName = data.region;
-      state.deliveryTimeline = data.estimatedDeliveryDays || (data.timeline && data.timeline.daysRange) || '7 to 10 business days';
-      state.estimatedDates = data.estimatedDateRange || (data.timeline && data.timeline.estimatedArrival) || state.estimatedDates;
-
-      if (checkoutRegionTag) checkoutRegionTag.textContent = `📍 Detected: ${data.region}`;
-      if (checkoutDeliveryDates) checkoutDeliveryDates.textContent = state.estimatedDates;
-      updateCartUI();
-      updatePreOrderInvoice();
-      return;
-    }
-  } catch (e) {
-    // Local fallback calculation if backend is unavailable
-  }
-
-  // Fallback local rule:
-  const cityClean = (city || '').trim().toLowerCase();
-  const pinClean = (pincode || '').trim();
-  const stateClean = (stateName || '').trim().toLowerCase();
-
-  const isKolkata = cityClean.includes('kolkata') || cityClean.includes('calcutta') || pinClean.startsWith('700');
-  const isWB = stateClean.includes('bengal') || pinClean.startsWith('71') || pinClean.startsWith('72') || pinClean.startsWith('73') || pinClean.startsWith('74');
-
-  if (isKolkata) {
-    state.deliveryCharge = 0; // FREE Delivery for Kolkata!
-    state.deliveryRegionName = 'Kolkata (Free Delivery)';
-  } else if (isWB) {
-    state.deliveryCharge = 100; // Flat ₹100 for West Bengal outside Kolkata
-    state.deliveryRegionName = 'West Bengal (Outside Kolkata)';
-  } else {
-    state.deliveryCharge = 150; // Flat ₹150 for outside Bengal (Rest of India)
-    state.deliveryRegionName = 'Outside Bengal (Rest of India)';
-  }
-
-  if (checkoutRegionTag) checkoutRegionTag.textContent = `📍 Detected: ${state.deliveryRegionName}`;
-  updateCartUI();
-  updatePreOrderInvoice();
-}
-
-// ==========================================================================
-// Core Render Functions
-// ==========================================================================
-
-function getFilteredProducts() {
-  let list = [...state.products];
-
-  // Category Filter
-  if (state.selectedCategory !== 'all') {
-    list = list.filter(p => p.category === state.selectedCategory);
-  }
-
-  // Search Filter
-  if (state.searchQuery.trim() !== '') {
-    const q = state.searchQuery.toLowerCase();
-    list = list.filter(p => 
-      p.name.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.categoryLabel.toLowerCase().includes(q)
-    );
-  }
-
-  // Sort
-  if (state.sortBy === 'price-asc') {
-    list.sort((a, b) => a.price - b.price);
-  } else if (state.sortBy === 'price-desc') {
-    list.sort((a, b) => b.price - a.price);
-  } else if (state.sortBy === 'rating-desc') {
-    list.sort((a, b) => b.rating - a.rating);
-  } else if (state.sortBy === 'name-asc') {
-    list.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  return list;
-}
-
-function renderProducts() {
-  const filtered = getFilteredProducts();
-  productCount.textContent = filtered.length;
-
-  if (filtered.length === 0) {
-    productGrid.innerHTML = '';
-    emptyState.style.display = 'block';
-    return;
-  }
-
-  emptyState.style.display = 'none';
-
-  productGrid.innerHTML = filtered.map(product => {
-    const isWishlisted = state.wishlist.includes(product.id);
-    return `
-      <article class="product-card" data-id="${product.id}">
-        <div class="card-image-wrap">
-          <img src="${product.image}" alt="${product.name} crafted by RSA Creations" loading="lazy">
-          <span class="product-badge">${product.badge}</span>
-          <button 
-            type="button" 
-            class="card-wishlist-btn ${isWishlisted ? 'active' : ''}" 
-            data-id="${product.id}" 
-            aria-label="${isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="${isWishlisted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-          </button>
-          <button type="button" class="card-quick-view-btn" data-id="${product.id}">
-            Quick View
-          </button>
-        </div>
-
-        <div class="card-content">
-          <span class="card-category">${product.categoryLabel}</span>
-          <h3 class="card-title">${product.name}</h3>
-          <div class="card-rating">
-            ★★★★★ <span>(${product.rating})</span>
-          </div>
-
-          <div class="card-footer">
-            <span class="card-price">₹${product.price.toLocaleString('en-IN')}</span>
-            <button type="button" class="add-cart-btn" data-id="${product.id}">
-              Add to Basket
-            </button>
-          </div>
-        </div>
-      </article>
-    `;
-  }).join('');
-}
-
-// ==========================================================================
-// Cart Logic & Drawer
-// ==========================================================================
-
-function saveCart() {
-  localStorage.setItem('rsa_cart_inr', JSON.stringify(state.cart));
-  updateCartUI();
-}
-
-function updateCartUI() {
-  const totalItemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-  cartBadge.textContent = totalItemCount;
-  cartDrawerCount.textContent = `(${totalItemCount} ${totalItemCount === 1 ? 'item' : 'items'})`;
-
-  // Render Cart Item Rows
-  if (state.cart.length === 0) {
-    cartItemsList.innerHTML = `
-      <div class="cart-empty-message">
-        <p style="font-size: 2.2rem; margin-bottom: 8px;">🧺</p>
-        <h4>Your basket is currently empty</h4>
-        <p style="font-size: 0.85rem; margin-top: 4px;">Explore our handcrafted creations for your living space.</p>
-      </div>
-    `;
-    checkoutBtn.disabled = true;
-    checkoutBtn.style.opacity = '0.5';
-    checkoutBtn.style.cursor = 'not-allowed';
-  } else {
-    checkoutBtn.disabled = false;
-    checkoutBtn.style.opacity = '1';
-    checkoutBtn.style.cursor = 'pointer';
-
-    cartItemsList.innerHTML = state.cart.map(item => `
-      <div class="cart-item" data-id="${item.id}">
-        <img src="${item.image}" alt="${item.name}" class="cart-item-img">
-        <div class="cart-item-details">
-          <h4 class="cart-item-title">${item.name}</h4>
-          <div class="cart-item-price">₹${item.price.toLocaleString('en-IN')}</div>
-          <div class="cart-item-qty">
-            <button type="button" class="qty-btn-mini btn-decrement" data-id="${item.id}">-</button>
-            <span class="qty-number">${item.quantity}</span>
-            <button type="button" class="qty-btn-mini btn-increment" data-id="${item.id}">+</button>
-          </div>
-        </div>
-        <button type="button" class="cart-item-remove" data-id="${item.id}" aria-label="Remove item">&times;</button>
-      </div>
-    `).join('');
-  }
-
-  // Calculate Subtotal in INR
-  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  cartSubtotal.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
-  if (checkoutSubtotal) checkoutSubtotal.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
-
-  // Free shipping & Regional Delivery Policy
-  // Policy: Kolkata = FREE (₹0), West Bengal = ₹100, Outside Bengal = ₹150
-  const isKolkata = (state.deliveryRegionName || '').toLowerCase().includes('kolkata');
-  const isWb = (state.deliveryRegionName || '').toLowerCase().includes('bengal');
-  let effectiveShipping = state.deliveryCharge;
-
-  if (isKolkata) {
-    trackerFill.style.width = '100%';
-    freeShippingText.innerHTML = '🎉 <strong>Kolkata Special: FREE Doorstep Delivery (₹0)!</strong>';
-    cartShipping.textContent = 'FREE';
-    cartShipping.style.color = 'var(--color-sage)';
-    effectiveShipping = 0;
-  } else if (isWb) {
-    trackerFill.style.width = '100%';
-    freeShippingText.innerHTML = '📍 <strong>West Bengal: Flat ₹100 Delivery</strong> (Free in Kolkata only)';
-    cartShipping.textContent = subtotal === 0 ? '₹0' : '₹100';
-    cartShipping.style.color = 'var(--text-main)';
-    effectiveShipping = 100;
-  } else {
-    trackerFill.style.width = '100%';
-    freeShippingText.innerHTML = '📍 <strong>Outside Bengal: Flat ₹150 Delivery</strong> (Free in Kolkata only)';
-    cartShipping.textContent = subtotal === 0 ? '₹0' : '₹150';
-    cartShipping.style.color = 'var(--text-main)';
-    effectiveShipping = 150;
-  }
-
-  // Label based on destination
-  if (cartShippingLabel) {
-    cartShippingLabel.textContent = isKolkata ? 'Delivery (Kolkata FREE)' : `Delivery (${state.deliveryRegionName.split(' ')[0]})`;
-  }
-  if (checkoutDeliveryFee) {
-    checkoutDeliveryFee.textContent = effectiveShipping === 0 ? 'FREE (₹0)' : `₹${effectiveShipping}`;
-  }
-
-  // Discount Calculation (Promo code HANDMADE10 for 10% off)
-  let discountAmount = 0;
-  if (state.promoApplied && subtotal > 0) {
-    discountAmount = Math.round(subtotal * state.promoDiscount);
-    discountRow.style.display = 'flex';
-    cartDiscount.textContent = `-₹${discountAmount.toLocaleString('en-IN')}`;
-    promoDiscountBadge.style.display = 'flex';
-  } else {
-    discountRow.style.display = 'none';
-    promoDiscountBadge.style.display = 'none';
-  }
-
-  // Calculate Final Total in INR
-  const grandTotal = Math.max(0, subtotal - discountAmount + (subtotal === 0 ? 0 : effectiveShipping));
-  const formattedTotal = `₹${grandTotal.toLocaleString('en-IN')}`;
-  cartTotal.textContent = formattedTotal;
-  if (checkoutTotalAmount) {
-    checkoutTotalAmount.textContent = formattedTotal;
-  }
-  const placeOrderAmountBadge = document.getElementById('placeOrderAmountBadge');
-  if (placeOrderAmountBadge) {
-    placeOrderAmountBadge.textContent = formattedTotal;
-  }
-  const upiAmountToPay = document.getElementById('upiAmountToPay');
-  if (upiAmountToPay) {
-    upiAmountToPay.textContent = formattedTotal;
-  }
-  const upiPayAmountStep = document.getElementById('upiPayAmountStep');
-  if (upiPayAmountStep) {
-    upiPayAmountStep.textContent = formattedTotal;
-  }
-  const checkboxPayAmount = document.getElementById('checkboxPayAmount');
-  if (checkboxPayAmount) {
-    checkboxPayAmount.textContent = formattedTotal;
-  }
-  const openUpiAppBtn = document.getElementById('openUpiAppBtn');
-  if (openUpiAppBtn) {
-    openUpiAppBtn.href = `upi://pay?pa=7980883038@ybl&pn=RSA%20Creations&cu=INR&am=${grandTotal}`;
-  }
-
-  // Automatically update on-screen pre-order invoice
-  updatePreOrderInvoice();
-}
-
-function addToCart(productId, quantity = 1) {
-  if (!state.currentUser) {
-    showToast('Please login or create an account to access and order handcrafted items!', 'toast');
-    openAuthModal('login');
-    return;
-  }
-
-  const product = state.products.find(p => p.id === productId);
-  if (!product) return;
-
-  const existing = state.cart.find(item => item.id === productId);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    state.cart.push({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: quantity
-    });
-  }
-
-  saveCart();
-  showToast(`Added "${product.name}" to your basket!`, 'toast-success');
-  openCartDrawer();
-}
-
-function openCartDrawer() {
-  cartDrawer.classList.add('open');
-  cartDrawer.setAttribute('aria-hidden', 'false');
-}
-
-function closeCartDrawer() {
-  cartDrawer.classList.remove('open');
-  cartDrawer.setAttribute('aria-hidden', 'true');
-}
-
-// ==========================================================================
-// Wishlist Logic
-// ==========================================================================
-
-function toggleWishlist(productId) {
-  const index = state.wishlist.indexOf(productId);
-  const product = state.products.find(p => p.id === productId);
-
-  if (index > -1) {
-    state.wishlist.splice(index, 1);
-    showToast(`Removed from saved pieces`);
-  } else {
-    state.wishlist.push(productId);
-    showToast(`Added "${product ? product.name : 'Piece'}" to Wishlist!`, 'toast-success');
-  }
-
-  localStorage.setItem('rsa_wishlist', JSON.stringify(state.wishlist));
-  wishlistBadge.textContent = state.wishlist.length;
-  renderProducts();
-}
-
-// ==========================================================================
-// Quick View Modal
-// ==========================================================================
-
-function openQuickView(productId) {
-  const product = state.products.find(p => p.id === productId);
-  if (!product) return;
-
-  currentActiveQuickViewProduct = product;
-  modalProductImage.src = product.image;
-  modalProductImage.alt = product.name;
-  modalProductBadge.textContent = product.badge;
-  modalProductCategory.textContent = product.categoryLabel;
-  modalProductTitle.textContent = product.name;
-  modalProductRating.textContent = `★★★★★ (${product.rating} • ${product.reviewsCount} reviews)`;
-  modalProductPrice.textContent = `₹${product.price.toLocaleString('en-IN')}`;
-  modalProductDescription.textContent = product.description;
-  modalProductMaterials.textContent = product.materials;
-  modalProductDimensions.textContent = product.dimensions;
-  modalProductMethod.textContent = product.method;
-  modalQtyInput.value = 1;
-
-  quickViewDialog.showModal();
-}
-
-// ==========================================================================
-// Toast Notifications
-// ==========================================================================
-
-function showToast(message, type = '') {
-  const toastContainer = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  toastContainer.appendChild(toast);
-
-  setTimeout(() => {
-    toast.classList.add('toast-remove');
-    setTimeout(() => toast.remove(), 300);
-  }, 3200);
-}
-
-// ==========================================================================
-// Event Listeners Initialization
-// ==========================================================================
-
-function initApp() {
-  computeDeliveryDateRange();
-  renderProducts();
-  updateCartUI();
-  updateAuthUI();
-  wishlistBadge.textContent = state.wishlist.length;
-
-  // Fetch updated catalog from backend API
-  fetchProductsFromBackend();
-
-  // Destination Selector inside Cart
-  if (cartDestinationSelect) {
-    cartDestinationSelect.addEventListener('change', (e) => {
-      const val = e.target.value;
-      if (val === 'kolkata') {
-        state.deliveryCharge = 0; // FREE for Kolkata!
-        state.deliveryRegionName = 'Kolkata (Free Delivery)';
-        custCity.value = 'Kolkata';
-        custZip.value = '700001';
-      } else if (val === 'wb') {
-        state.deliveryCharge = 100;
-        state.deliveryRegionName = 'West Bengal (Outside Kolkata)';
-        custCity.value = 'Siliguri';
-        custZip.value = '734001';
-      } else {
-        state.deliveryCharge = 150;
-        state.deliveryRegionName = 'Outside Bengal (Rest of India)';
-        custCity.value = 'New Delhi';
-        custZip.value = '110001';
-      }
-      updateCartUI();
-      updatePreOrderInvoice();
-    });
-  }
-
-  // Category Filtering
-  categoryPills.addEventListener('click', (e) => {
-    const pill = e.target.closest('.pill-btn');
-    if (!pill) return;
-
-    categoryPills.querySelectorAll('.pill-btn').forEach(b => {
-      b.classList.remove('active');
-      b.setAttribute('aria-selected', 'false');
-    });
-
-    pill.classList.add('active');
-    pill.setAttribute('aria-selected', 'true');
-    state.selectedCategory = pill.dataset.category;
-    renderProducts();
-  });
-
-  // Sort change
-  sortSelect.addEventListener('change', (e) => {
-    state.sortBy = e.target.value;
-    renderProducts();
-  });
-
-  // Search input handler
-  headerSearchInput.addEventListener('input', (e) => {
-    state.searchQuery = e.target.value;
-    renderProducts();
-  });
-
-  searchSubmitBtn.addEventListener('click', () => {
-    state.searchQuery = headerSearchInput.value;
-    renderProducts();
-  });
-
-  // Reset filters
-  resetFiltersBtn.addEventListener('click', () => {
-    state.searchQuery = '';
-    state.selectedCategory = 'all';
-    headerSearchInput.value = '';
-    categoryPills.querySelectorAll('.pill-btn').forEach((b, i) => {
-      b.classList.toggle('active', i === 0);
-      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-    });
-    renderProducts();
-  });
-
-  // Product Grid Delegate (Add to cart, Wishlist, Quick View)
-  productGrid.addEventListener('click', (e) => {
-    const addBtn = e.target.closest('.add-cart-btn');
-    if (addBtn) {
-      addToCart(addBtn.dataset.id, 1);
-      return;
-    }
-
-    const wishBtn = e.target.closest('.card-wishlist-btn');
-    if (wishBtn) {
-      toggleWishlist(wishBtn.dataset.id);
-      return;
-    }
-
-    const quickBtn = e.target.closest('.card-quick-view-btn');
-    if (quickBtn) {
-      openQuickView(quickBtn.dataset.id);
-      return;
-    }
-  });
-
-  // Cart Drawer open/close
-  cartOpenBtn.addEventListener('click', openCartDrawer);
-  cartCloseBtn.addEventListener('click', closeCartDrawer);
-  cartBackdrop.addEventListener('click', closeCartDrawer);
-  continueShoppingBtn.addEventListener('click', closeCartDrawer);
-
-  // Cart Items Click Delegate (Increment, Decrement, Remove)
-  cartItemsList.addEventListener('click', (e) => {
-    const incBtn = e.target.closest('.btn-increment');
-    if (incBtn) {
-      const item = state.cart.find(i => i.id === incBtn.dataset.id);
-      if (item) {
-        item.quantity += 1;
-        saveCart();
-      }
-      return;
-    }
-
-    const decBtn = e.target.closest('.btn-decrement');
-    if (decBtn) {
-      const item = state.cart.find(i => i.id === decBtn.dataset.id);
-      if (item && item.quantity > 1) {
-        item.quantity -= 1;
-        saveCart();
-      } else if (item && item.quantity === 1) {
-        state.cart = state.cart.filter(i => i.id !== decBtn.dataset.id);
-        saveCart();
-      }
-      return;
-    }
-
-    const removeBtn = e.target.closest('.cart-item-remove');
-    if (removeBtn) {
-      state.cart = state.cart.filter(i => i.id !== removeBtn.dataset.id);
-      saveCart();
-      showToast('Item removed from basket');
-      return;
-    }
-  });
-
-  // Promo Code Handler
-  applyPromoBtn.addEventListener('click', () => {
-    const code = promoInput.value.trim().toUpperCase();
-    if (code === state.promoCode) {
-      state.promoApplied = true;
-      saveCart();
-      showToast('Promo code applied: 10% discount on order!', 'toast-success');
-      promoInput.value = '';
-    } else {
-      showToast('Invalid promo code. Try "HANDMADE10"');
-    }
-  });
-
-  removePromoBtn.addEventListener('click', () => {
-    state.promoApplied = false;
-    saveCart();
-    showToast('Promo code removed');
-  });
-
-  // Quick View Quantity Counter
-  modalQtyMinus.addEventListener('click', () => {
-    let val = parseInt(modalQtyInput.value, 10) || 1;
-    if (val > 1) modalQtyInput.value = val - 1;
-  });
-
-  modalQtyPlus.addEventListener('click', () => {
-    let val = parseInt(modalQtyInput.value, 10) || 1;
-    if (val < 10) modalQtyInput.value = val + 1;
-  });
-
-  modalAddToCartBtn.addEventListener('click', () => {
-    if (currentActiveQuickViewProduct) {
-      const qty = parseInt(modalQtyInput.value, 10) || 1;
-      addToCart(currentActiveQuickViewProduct.id, qty);
-      quickViewDialog.close();
-    }
-  });
-
-  modalCloseBtn.addEventListener('click', () => {
-    quickViewDialog.close();
-  });
-
-  // Helper: Build Pre-Order Draft Object for Invoice Preview
+// Helper: Build Pre-Order Draft Object for Invoice Preview
   function getPreOrderDraft() {
     const fn = (document.getElementById('custFirstName')?.value || '').trim();
     const ln = (document.getElementById('custLastName')?.value || '').trim();
@@ -1621,6 +1047,581 @@ function initApp() {
       badge.textContent = checkoutTotalAmount.textContent;
     }
   }
+
+  
+// ==========================================================================
+// Backend API Integration
+// ==========================================================================
+
+async function fetchProductsFromBackend() {
+  try {
+    const res = await fetch(`${API_BASE}/api/products`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.products && data.products.length > 0) {
+        state.products = data.products;
+        renderProducts();
+      }
+    }
+  } catch (err) {
+    console.log('Using local catalog, backend offline:', err.message);
+  }
+}
+
+// Calculate shipping from backend API or local logic
+async function updateShippingCalculation(city = 'Kolkata', pincode = '700001', stateName = 'West Bengal') {
+  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/shipping/calculate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ city, pincode, state: stateName, subtotal })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      state.deliveryCharge = data.deliveryCharge;
+      state.deliveryRegionName = data.region;
+      state.deliveryTimeline = data.estimatedDeliveryDays || (data.timeline && data.timeline.daysRange) || '7 to 10 business days';
+      state.estimatedDates = data.estimatedDateRange || (data.timeline && data.timeline.estimatedArrival) || state.estimatedDates;
+
+      if (checkoutRegionTag) checkoutRegionTag.textContent = `📍 Detected: ${data.region}`;
+      if (checkoutDeliveryDates) checkoutDeliveryDates.textContent = state.estimatedDates;
+      updateCartUI();
+      updatePreOrderInvoice();
+      return;
+    }
+  } catch (e) {
+    // Local fallback calculation if backend is unavailable
+  }
+
+  // Fallback local rule:
+  const cityClean = (city || '').trim().toLowerCase();
+  const pinClean = (pincode || '').trim();
+  const stateClean = (stateName || '').trim().toLowerCase();
+
+  const isKolkata = cityClean.includes('kolkata') || cityClean.includes('calcutta') || pinClean.startsWith('700');
+  const isWB = stateClean.includes('bengal') || pinClean.startsWith('71') || pinClean.startsWith('72') || pinClean.startsWith('73') || pinClean.startsWith('74');
+
+  if (isKolkata) {
+    state.deliveryCharge = 0; // FREE Delivery for Kolkata!
+    state.deliveryRegionName = 'Kolkata (Free Delivery)';
+  } else if (isWB) {
+    state.deliveryCharge = 100; // Flat ₹100 for West Bengal outside Kolkata
+    state.deliveryRegionName = 'West Bengal (Outside Kolkata)';
+  } else {
+    state.deliveryCharge = 150; // Flat ₹150 for outside Bengal (Rest of India)
+    state.deliveryRegionName = 'Outside Bengal (Rest of India)';
+  }
+
+  if (checkoutRegionTag) checkoutRegionTag.textContent = `📍 Detected: ${state.deliveryRegionName}`;
+  updateCartUI();
+  updatePreOrderInvoice();
+}
+
+// ==========================================================================
+// Core Render Functions
+// ==========================================================================
+
+function getFilteredProducts() {
+  let list = [...state.products];
+
+  // Category Filter
+  if (state.selectedCategory !== 'all') {
+    list = list.filter(p => p.category === state.selectedCategory);
+  }
+
+  // Search Filter
+  if (state.searchQuery.trim() !== '') {
+    const q = state.searchQuery.toLowerCase();
+    list = list.filter(p => 
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.categoryLabel.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  if (state.sortBy === 'price-asc') {
+    list.sort((a, b) => a.price - b.price);
+  } else if (state.sortBy === 'price-desc') {
+    list.sort((a, b) => b.price - a.price);
+  } else if (state.sortBy === 'rating-desc') {
+    list.sort((a, b) => b.rating - a.rating);
+  } else if (state.sortBy === 'name-asc') {
+    list.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return list;
+}
+
+function renderProducts() {
+  const filtered = getFilteredProducts();
+  productCount.textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    productGrid.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  productGrid.innerHTML = filtered.map(product => {
+    const isWishlisted = state.wishlist.includes(product.id);
+    return `
+      <article class="product-card" data-id="${product.id}">
+        <div class="card-image-wrap">
+          <img src="${product.image}" alt="${product.name} crafted by RSA Creations" loading="lazy">
+          <span class="product-badge">${product.badge}</span>
+          <button 
+            type="button" 
+            class="card-wishlist-btn ${isWishlisted ? 'active' : ''}" 
+            data-id="${product.id}" 
+            aria-label="${isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="${isWishlisted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+          <button type="button" class="card-quick-view-btn" data-id="${product.id}">
+            Quick View
+          </button>
+        </div>
+
+        <div class="card-content">
+          <span class="card-category">${product.categoryLabel}</span>
+          <h3 class="card-title">${product.name}</h3>
+          <div class="card-rating">
+            ★★★★★ <span>(${product.rating})</span>
+          </div>
+
+          <div class="card-footer">
+            <span class="card-price">₹${product.price.toLocaleString('en-IN')}</span>
+            <button type="button" class="add-cart-btn" onclick="window.addToCart('${product.id}', 1)" data-id="${product.id}">
+              Add to Basket
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+// ==========================================================================
+// Cart Logic & Drawer
+// ==========================================================================
+
+function saveCart() {
+  localStorage.setItem('rsa_cart_inr', JSON.stringify(state.cart));
+  updateCartUI();
+}
+
+function updateCartUI() {
+  const totalItemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  cartBadge.textContent = totalItemCount;
+  cartDrawerCount.textContent = `(${totalItemCount} ${totalItemCount === 1 ? 'item' : 'items'})`;
+
+  // Render Cart Item Rows
+  if (state.cart.length === 0) {
+    cartItemsList.innerHTML = `
+      <div class="cart-empty-message">
+        <p style="font-size: 2.2rem; margin-bottom: 8px;">🧺</p>
+        <h4>Your basket is currently empty</h4>
+        <p style="font-size: 0.85rem; margin-top: 4px;">Explore our handcrafted creations for your living space.</p>
+      </div>
+    `;
+    checkoutBtn.disabled = true;
+    checkoutBtn.style.opacity = '0.5';
+    checkoutBtn.style.cursor = 'not-allowed';
+  } else {
+    checkoutBtn.disabled = false;
+    checkoutBtn.style.opacity = '1';
+    checkoutBtn.style.cursor = 'pointer';
+
+    cartItemsList.innerHTML = state.cart.map(item => `
+      <div class="cart-item" data-id="${item.id}">
+        <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+        <div class="cart-item-details">
+          <h4 class="cart-item-title">${item.name}</h4>
+          <div class="cart-item-price">₹${item.price.toLocaleString('en-IN')}</div>
+          <div class="cart-item-qty">
+            <button type="button" class="qty-btn-mini btn-decrement" data-id="${item.id}">-</button>
+            <span class="qty-number">${item.quantity}</span>
+            <button type="button" class="qty-btn-mini btn-increment" data-id="${item.id}">+</button>
+          </div>
+        </div>
+        <button type="button" class="cart-item-remove" data-id="${item.id}" aria-label="Remove item">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  // Calculate Subtotal in INR
+  const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  cartSubtotal.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+  if (checkoutSubtotal) checkoutSubtotal.textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+
+  // Free shipping & Regional Delivery Policy
+  // Policy: Kolkata = FREE (₹0), West Bengal = ₹100, Outside Bengal = ₹150
+  const isKolkata = (state.deliveryRegionName || '').toLowerCase().includes('kolkata');
+  const isWb = (state.deliveryRegionName || '').toLowerCase().includes('bengal');
+  let effectiveShipping = state.deliveryCharge;
+
+  if (isKolkata) {
+    trackerFill.style.width = '100%';
+    freeShippingText.innerHTML = '🎉 <strong>Kolkata Special: FREE Doorstep Delivery (₹0)!</strong>';
+    cartShipping.textContent = 'FREE';
+    cartShipping.style.color = 'var(--color-sage)';
+    effectiveShipping = 0;
+  } else if (isWb) {
+    trackerFill.style.width = '100%';
+    freeShippingText.innerHTML = '📍 <strong>West Bengal: Flat ₹100 Delivery</strong> (Free in Kolkata only)';
+    cartShipping.textContent = subtotal === 0 ? '₹0' : '₹100';
+    cartShipping.style.color = 'var(--text-main)';
+    effectiveShipping = 100;
+  } else {
+    trackerFill.style.width = '100%';
+    freeShippingText.innerHTML = '📍 <strong>Outside Bengal: Flat ₹150 Delivery</strong> (Free in Kolkata only)';
+    cartShipping.textContent = subtotal === 0 ? '₹0' : '₹150';
+    cartShipping.style.color = 'var(--text-main)';
+    effectiveShipping = 150;
+  }
+
+  // Label based on destination
+  if (cartShippingLabel) {
+    cartShippingLabel.textContent = isKolkata ? 'Delivery (Kolkata FREE)' : `Delivery (${state.deliveryRegionName.split(' ')[0]})`;
+  }
+  if (checkoutDeliveryFee) {
+    checkoutDeliveryFee.textContent = effectiveShipping === 0 ? 'FREE (₹0)' : `₹${effectiveShipping}`;
+  }
+
+  // Discount Calculation (Promo code HANDMADE10 for 10% off)
+  let discountAmount = 0;
+  if (state.promoApplied && subtotal > 0) {
+    discountAmount = Math.round(subtotal * state.promoDiscount);
+    discountRow.style.display = 'flex';
+    cartDiscount.textContent = `-₹${discountAmount.toLocaleString('en-IN')}`;
+    promoDiscountBadge.style.display = 'flex';
+  } else {
+    discountRow.style.display = 'none';
+    promoDiscountBadge.style.display = 'none';
+  }
+
+  // Calculate Final Total in INR
+  const grandTotal = Math.max(0, subtotal - discountAmount + (subtotal === 0 ? 0 : effectiveShipping));
+  const formattedTotal = `₹${grandTotal.toLocaleString('en-IN')}`;
+  cartTotal.textContent = formattedTotal;
+  if (checkoutTotalAmount) {
+    checkoutTotalAmount.textContent = formattedTotal;
+  }
+  const placeOrderAmountBadge = document.getElementById('placeOrderAmountBadge');
+  if (placeOrderAmountBadge) {
+    placeOrderAmountBadge.textContent = formattedTotal;
+  }
+  const upiAmountToPay = document.getElementById('upiAmountToPay');
+  if (upiAmountToPay) {
+    upiAmountToPay.textContent = formattedTotal;
+  }
+  const upiPayAmountStep = document.getElementById('upiPayAmountStep');
+  if (upiPayAmountStep) {
+    upiPayAmountStep.textContent = formattedTotal;
+  }
+  const checkboxPayAmount = document.getElementById('checkboxPayAmount');
+  if (checkboxPayAmount) {
+    checkboxPayAmount.textContent = formattedTotal;
+  }
+  const openUpiAppBtn = document.getElementById('openUpiAppBtn');
+  if (openUpiAppBtn) {
+    openUpiAppBtn.href = `upi://pay?pa=7980883038@ybl&pn=RSA%20Creations&cu=INR&am=${grandTotal}`;
+  }
+
+  // Automatically update on-screen pre-order invoice
+  updatePreOrderInvoice();
+}
+
+function addToCart(productId, quantity = 1) {
+
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+
+  const existing = state.cart.find(item => item.id === productId);
+  if (existing) {
+    existing.quantity += quantity;
+  } else {
+    state.cart.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: quantity
+    });
+  }
+
+  saveCart();
+  showToast(`Added "${product.name}" to your basket!`, 'toast-success');
+  openCartDrawer();
+}
+
+function openCartDrawer() {
+  cartDrawer.classList.add('open');
+  cartDrawer.setAttribute('aria-hidden', 'false');
+}
+
+function closeCartDrawer() {
+  cartDrawer.classList.remove('open');
+  cartDrawer.setAttribute('aria-hidden', 'true');
+}
+
+// ==========================================================================
+// Wishlist Logic
+// ==========================================================================
+
+function toggleWishlist(productId) {
+  const index = state.wishlist.indexOf(productId);
+  const product = state.products.find(p => p.id === productId);
+
+  if (index > -1) {
+    state.wishlist.splice(index, 1);
+    showToast(`Removed from saved pieces`);
+  } else {
+    state.wishlist.push(productId);
+    showToast(`Added "${product ? product.name : 'Piece'}" to Wishlist!`, 'toast-success');
+  }
+
+  localStorage.setItem('rsa_wishlist', JSON.stringify(state.wishlist));
+  wishlistBadge.textContent = state.wishlist.length;
+  renderProducts();
+}
+
+// ==========================================================================
+// Quick View Modal
+// ==========================================================================
+
+function openQuickView(productId) {
+  const product = state.products.find(p => p.id === productId);
+  if (!product) return;
+
+  currentActiveQuickViewProduct = product;
+  modalProductImage.src = product.image;
+  modalProductImage.alt = product.name;
+  modalProductBadge.textContent = product.badge;
+  modalProductCategory.textContent = product.categoryLabel;
+  modalProductTitle.textContent = product.name;
+  modalProductRating.textContent = `★★★★★ (${product.rating} • ${product.reviewsCount} reviews)`;
+  modalProductPrice.textContent = `₹${product.price.toLocaleString('en-IN')}`;
+  modalProductDescription.textContent = product.description;
+  modalProductMaterials.textContent = product.materials;
+  modalProductDimensions.textContent = product.dimensions;
+  modalProductMethod.textContent = product.method;
+  modalQtyInput.value = 1;
+
+  quickViewDialog.showModal();
+}
+
+// ==========================================================================
+// Toast Notifications
+// ==========================================================================
+
+function showToast(message, type = '') {
+  const toastContainer = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-remove');
+    setTimeout(() => toast.remove(), 300);
+  }, 3200);
+}
+
+// ==========================================================================
+// Event Listeners Initialization
+// ==========================================================================
+
+function initApp() {
+  computeDeliveryDateRange();
+  renderProducts();
+  updateCartUI();
+  updateAuthUI();
+  wishlistBadge.textContent = state.wishlist.length;
+
+  // Fetch updated catalog from backend API
+  fetchProductsFromBackend();
+
+  // Destination Selector inside Cart
+  if (cartDestinationSelect) {
+    cartDestinationSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val === 'kolkata') {
+        state.deliveryCharge = 0; // FREE for Kolkata!
+        state.deliveryRegionName = 'Kolkata (Free Delivery)';
+        custCity.value = 'Kolkata';
+        custZip.value = '700001';
+      } else if (val === 'wb') {
+        state.deliveryCharge = 100;
+        state.deliveryRegionName = 'West Bengal (Outside Kolkata)';
+        custCity.value = 'Siliguri';
+        custZip.value = '734001';
+      } else {
+        state.deliveryCharge = 150;
+        state.deliveryRegionName = 'Outside Bengal (Rest of India)';
+        custCity.value = 'New Delhi';
+        custZip.value = '110001';
+      }
+      updateCartUI();
+      updatePreOrderInvoice();
+    });
+  }
+
+  // Category Filtering
+  categoryPills.addEventListener('click', (e) => {
+    const pill = e.target.closest('.pill-btn');
+    if (!pill) return;
+
+    categoryPills.querySelectorAll('.pill-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+
+    pill.classList.add('active');
+    pill.setAttribute('aria-selected', 'true');
+    state.selectedCategory = pill.dataset.category;
+    renderProducts();
+  });
+
+  // Sort change
+  sortSelect.addEventListener('change', (e) => {
+    state.sortBy = e.target.value;
+    renderProducts();
+  });
+
+  // Search input handler
+  headerSearchInput.addEventListener('input', (e) => {
+    state.searchQuery = e.target.value;
+    renderProducts();
+  });
+
+  searchSubmitBtn.addEventListener('click', () => {
+    state.searchQuery = headerSearchInput.value;
+    renderProducts();
+  });
+
+  // Reset filters
+  resetFiltersBtn.addEventListener('click', () => {
+    state.searchQuery = '';
+    state.selectedCategory = 'all';
+    headerSearchInput.value = '';
+    categoryPills.querySelectorAll('.pill-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === 0);
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    });
+    renderProducts();
+  });
+
+  // Product Grid Delegate (Add to cart, Wishlist, Quick View)
+  productGrid.addEventListener('click', (e) => {
+    const addBtn = e.target.closest('.add-cart-btn');
+    if (addBtn) {
+      addToCart(addBtn.dataset.id, 1);
+      return;
+    }
+
+    const wishBtn = e.target.closest('.card-wishlist-btn');
+    if (wishBtn) {
+      toggleWishlist(wishBtn.dataset.id);
+      return;
+    }
+
+    const quickBtn = e.target.closest('.card-quick-view-btn');
+    if (quickBtn) {
+      openQuickView(quickBtn.dataset.id);
+      return;
+    }
+  });
+
+  // Cart Drawer open/close
+  cartOpenBtn.addEventListener('click', openCartDrawer);
+  cartCloseBtn.addEventListener('click', closeCartDrawer);
+  cartBackdrop.addEventListener('click', closeCartDrawer);
+  continueShoppingBtn.addEventListener('click', closeCartDrawer);
+
+  // Cart Items Click Delegate (Increment, Decrement, Remove)
+  cartItemsList.addEventListener('click', (e) => {
+    const incBtn = e.target.closest('.btn-increment');
+    if (incBtn) {
+      const item = state.cart.find(i => i.id === incBtn.dataset.id);
+      if (item) {
+        item.quantity += 1;
+        saveCart();
+      }
+      return;
+    }
+
+    const decBtn = e.target.closest('.btn-decrement');
+    if (decBtn) {
+      const item = state.cart.find(i => i.id === decBtn.dataset.id);
+      if (item && item.quantity > 1) {
+        item.quantity -= 1;
+        saveCart();
+      } else if (item && item.quantity === 1) {
+        state.cart = state.cart.filter(i => i.id !== decBtn.dataset.id);
+        saveCart();
+      }
+      return;
+    }
+
+    const removeBtn = e.target.closest('.cart-item-remove');
+    if (removeBtn) {
+      state.cart = state.cart.filter(i => i.id !== removeBtn.dataset.id);
+      saveCart();
+      showToast('Item removed from basket');
+      return;
+    }
+  });
+
+  // Promo Code Handler
+  applyPromoBtn.addEventListener('click', () => {
+    const code = promoInput.value.trim().toUpperCase();
+    if (code === state.promoCode) {
+      state.promoApplied = true;
+      saveCart();
+      showToast('Promo code applied: 10% discount on order!', 'toast-success');
+      promoInput.value = '';
+    } else {
+      showToast('Invalid promo code. Try "HANDMADE10"');
+    }
+  });
+
+  removePromoBtn.addEventListener('click', () => {
+    state.promoApplied = false;
+    saveCart();
+    showToast('Promo code removed');
+  });
+
+  // Quick View Quantity Counter
+  modalQtyMinus.addEventListener('click', () => {
+    let val = parseInt(modalQtyInput.value, 10) || 1;
+    if (val > 1) modalQtyInput.value = val - 1;
+  });
+
+  modalQtyPlus.addEventListener('click', () => {
+    let val = parseInt(modalQtyInput.value, 10) || 1;
+    if (val < 10) modalQtyInput.value = val + 1;
+  });
+
+  modalAddToCartBtn.addEventListener('click', () => {
+    if (currentActiveQuickViewProduct) {
+      const qty = parseInt(modalQtyInput.value, 10) || 1;
+      addToCart(currentActiveQuickViewProduct.id, qty);
+      quickViewDialog.close();
+    }
+  });
+
+  modalCloseBtn.addEventListener('click', () => {
+    quickViewDialog.close();
+  });
 
   // Checkout Modal Open (Direct & Frictionless)
   checkoutBtn.addEventListener('click', () => {
@@ -2292,6 +2293,19 @@ function initApp() {
       loginError.style.display = 'none';
       const identifier = loginIdentifier.value.trim();
       const password = loginPassword.value;
+      const submitBtn = document.getElementById('loginSubmitBtn');
+
+      if (!identifier || !password) {
+        loginError.textContent = 'Please enter your email/mobile and password.';
+        loginError.style.display = 'block';
+        showToast('Please enter your email/mobile and password.', 'toast');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.textContent = 'Logging in...';
+        submitBtn.disabled = true;
+      }
 
       try {
         const res = await fetch(`${API_BASE}/api/auth/login`, {
@@ -2316,12 +2330,20 @@ function initApp() {
             }, 600);
           }
         } else {
-          loginError.textContent = data.error || 'Failed to login. Please check your credentials.';
+          const errMsg = data.error || 'Failed to login. Please check your credentials.';
+          loginError.textContent = errMsg;
           loginError.style.display = 'block';
+          showToast(`⚠️ ${errMsg}`, 'toast');
         }
       } catch (err) {
         loginError.textContent = 'Network error. Please make sure the server is running.';
         loginError.style.display = 'block';
+        showToast('Network error. Connecting to backend...', 'toast');
+      } finally {
+        if (submitBtn) {
+          submitBtn.textContent = 'Login to My Account';
+          submitBtn.disabled = false;
+        }
       }
     });
   }
@@ -2335,11 +2357,18 @@ function initApp() {
       const email = signupEmail.value.trim();
       const mobile = signupMobile.value.trim();
       const password = signupPassword.value;
+      const submitBtn = document.getElementById('signupSubmitBtn');
 
       if (!email && !mobile) {
         signupError.textContent = 'Please enter either an email address or mobile number.';
         signupError.style.display = 'block';
+        showToast('Please enter either an email address or mobile number.', 'toast');
         return;
+      }
+
+      if (submitBtn) {
+        submitBtn.textContent = 'Creating Account...';
+        submitBtn.disabled = true;
       }
 
       try {
@@ -2363,12 +2392,20 @@ function initApp() {
             openAddressModal();
           }, 600);
         } else {
-          signupError.textContent = data.error || 'Signup failed. Please try again.';
+          const errMsg = data.error || 'Signup failed. Please try again.';
+          signupError.textContent = errMsg;
           signupError.style.display = 'block';
+          showToast(`⚠️ ${errMsg}`, 'toast');
         }
       } catch (err) {
         signupError.textContent = 'Network error. Please try again.';
         signupError.style.display = 'block';
+        showToast('Network error while creating account.', 'toast');
+      } finally {
+        if (submitBtn) {
+          submitBtn.textContent = 'Create My Account';
+          submitBtn.disabled = false;
+        }
       }
     });
   }

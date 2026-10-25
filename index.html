@@ -834,10 +834,10 @@
 
       <!-- Auth Tabs -->
       <div class="auth-tabs">
-        <button class="auth-tab active" id="loginTab" data-tab="login">Password</button>
-        <button class="auth-tab" id="otpLoginTab" data-tab="otpLogin">Login via OTP 📲</button>
-        <button class="auth-tab" id="recoveryTab" data-tab="recovery">Forgot Password?</button>
-        <button class="auth-tab" id="signupTab" data-tab="signup">Sign Up</button>
+        <button type="button" class="auth-tab active" id="loginTab" onclick="window.switchAuthTab('login')" data-tab="login">Password</button>
+        <button type="button" class="auth-tab" id="otpLoginTab" onclick="window.switchAuthTab('otpLogin')" data-tab="otpLogin">Login via OTP 📲</button>
+        <button type="button" class="auth-tab" id="recoveryTab" onclick="window.switchAuthTab('recovery')" data-tab="recovery">Forgot Password?</button>
+        <button type="button" class="auth-tab" id="signupTab" onclick="window.switchAuthTab('signup')" data-tab="signup">Sign Up</button>
       </div>
 
       <!-- Password Login Form -->
@@ -851,8 +851,8 @@
           <input type="password" id="loginPassword" required placeholder="Enter your password" minlength="6">
         </div>
         <div class="auth-helper-row" style="display: flex; justify-content: space-between; align-items: center;">
-          <a href="#" id="loginViaOtpLink" class="auth-helper-link" style="color: #5F259F;">📲 Login via OTP instead</a>
-          <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
+          <a href="#" id="loginViaOtpLink" onclick="window.switchAuthTab('otpLogin'); return false;" class="auth-helper-link" style="color: #5F259F;">📲 Login via OTP instead</a>
+          <a href="#" id="forgotPasswordLink" onclick="window.switchAuthTab('recovery'); return false;" class="auth-helper-link">Forgot Password?</a>
         </div>
         <div class="auth-error" id="loginError" style="display: none;"></div>
         <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">Login to My Account</button>
@@ -889,7 +889,7 @@
         <button type="submit" class="btn btn-primary btn-block" id="verifyLoginOtpBtn" style="display: none;">Verify OTP & Login</button>
 
         <div class="auth-helper-row" style="text-align: center; margin-top: 6px;">
-          <a href="#" id="backToPasswordLoginLink" class="auth-helper-link">← Login with Password</a>
+          <a href="#" id="backToPasswordLoginLink" onclick="window.switchAuthTab('login'); return false;" class="auth-helper-link">← Login with Password</a>
         </div>
       </form>
 
@@ -946,7 +946,7 @@
         <button type="submit" class="btn btn-primary btn-block" id="recoverySubmitBtn" style="display: none;">Verify OTP & Reset Password</button>
 
         <div class="auth-helper-row" style="text-align: center; margin-top: 6px;">
-          <a href="#" id="backToLoginLink" class="auth-helper-link">← Back to Login</a>
+          <a href="#" id="backToLoginLink" onclick="window.switchAuthTab('login'); return false;" class="auth-helper-link">← Back to Login</a>
         </div>
       </form>
 
@@ -976,9 +976,9 @@
   </dialog>
 
   <!-- Address Dialog (shown after login if no address saved) -->
-  <dialog class="auth-dialog address-dialog" id="addressDialog" closedby="any" aria-labelledby="addressDialogTitle">
+  <dialog class="auth-dialog address-dialog" id="addressDialog" aria-labelledby="addressDialogTitle">
     <div class="auth-wrapper">
-      <button class="dialog-close-btn" id="addressCloseBtn" aria-label="Close">&times;</button>
+      <button class="dialog-close-btn" id="addressCloseBtn" onclick="document.getElementById('addressDialog').close()" aria-label="Close">&times;</button>
       <div class="auth-header">
         <span class="logo-mark">RSA</span>
         <h2 id="addressDialogTitle">Add Delivery Address</h2>
