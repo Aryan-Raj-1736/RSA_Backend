@@ -20,8 +20,18 @@ const SERVER_START_TIME = new Date();
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files (index.html, styles.css, app.js) directly
+// Serve static frontend files (index.html, styles.css, app.js, admin.html) directly
 app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '../RSA-frontend')));
+
+// Root route handler to serve storefront index.html
+app.get('/', (req, res) => {
+  const localIndex = path.join(__dirname, 'index.html');
+  const parentIndex = path.join(__dirname, '../RSA-frontend/index.html');
+  if (fs.existsSync(localIndex)) return res.sendFile(localIndex);
+  if (fs.existsSync(parentIndex)) return res.sendFile(parentIndex);
+  res.json({ message: 'RSA Creations Backend API is Live!', version: '2.0.0' });
+});
 
 // Data Directory & Persistence
 const DATA_DIR = path.join(__dirname, 'data');

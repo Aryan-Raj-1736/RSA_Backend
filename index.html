@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSA Creations | Handcrafted Artisanal Goods & Home Decor</title>
+  <meta name="description" content="Discover unique, ethically made handmade pottery, woven textiles, home decor, and accessories handcrafted with passion by RSA Creations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Announcement Bar -->
+  <aside class="announcement-bar" aria-label="Special Offers">
+    <div class="announcement-content">
+      <span>✨ Welcome to <strong>RSA Creations</strong> — Delivery in Kolkata: ₹60 | Outside Kolkata: ₹100–₹150 | Free shipping above ₹1,999 | Code: <mark>HANDMADE10</mark></span>
+    </div>
+  </aside>
+
+  <!-- Main Navigation Header -->
+  <header class="site-header" id="header">
+    <div class="header-container">
+      <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+
+      <a href="#hero" class="brand-logo" aria-label="RSA Creations Homepage">
+        <span class="logo-mark">RSA</span>
+        <span class="logo-text">Creations</span>
+        <span class="logo-tagline">Artisanal Studio</span>
+      </a>
+
+      <nav class="main-nav" id="mainNav" aria-label="Primary navigation">
+        <ul class="nav-list">
+          <li><a href="#shop" class="nav-link">Shop</a></li>
+          <li><a href="#story" class="nav-link">Our Story</a></li>
+          <li><a href="#artisan-values" class="nav-link">Craftsmanship</a></li>
+          <li><a href="#reviews" class="nav-link">Reviews</a></li>
+          <li><a href="#contact" class="nav-link">Contact</a></li>
+          <li><a href="/admin" class="nav-link" style="color: var(--color-terracotta); font-weight: 700;">⚙️ Admin Hub</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <input type="search" id="headerSearchInput" placeholder="Search handmade crafts..." aria-label="Search products">
+          <button class="action-btn" id="searchSubmitBtn" aria-label="Search">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+        </div>
+
+          <button class="action-btn account-btn" id="accountHeaderBtn" aria-label="My Account">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="account-label" id="accountLabel">Login</span>
+          </button>
+
+        <button class="action-btn wishlist-btn" id="wishlistHeaderBtn" aria-label="View Wishlist">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <span class="badge" id="wishlistBadge">0</span>
+        </button>
+
+        <button class="action-btn cart-btn" id="cartOpenBtn" aria-label="View Shopping Cart">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+          <span class="badge" id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="hero-wrapper">
+        <div class="hero-content">
+          <div class="hero-eyebrow">
+            <span class="sparkle">✦</span> Handcrafted with Soul & Intention
+          </div>
+          <h1 class="hero-title">Timeless creations for your home and mindful living.</h1>
+          <p class="hero-description">
+            At <strong>RSA Creations</strong>, every single creation is thoughtfully shaped, stitched, and finished by hand. We celebrate organic textures, natural earthen pigments, and heirloom-quality craftsmanship.
+          </p>
+          <div class="hero-cta-group">
+            <a href="#shop" class="btn btn-primary">Explore Handcrafted Goods</a>
+            <a href="#story" class="btn btn-secondary">Our Workshop Story</a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="stat-item">
+              <strong>100%</strong>
+              <span>Slow-Crafted</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <strong>Eco</strong>
+              <span>Sustainable Pack</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <strong>4.9 ★</strong>
+              <span>Customer Rating</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-image-card">
+            <img 
+              src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1000&q=80" 
+              alt="Artisan molding a ceramic pottery bowl by hand at RSA Creations workshop" 
+              loading="eager"
+              fetchpriority="high"
+            >
+            <div class="hero-floating-card">
+              <span class="artisan-badge">Master Artisan Pick</span>
+              <p class="floating-title">Terracotta Earth Planter</p>
+              <span class="floating-price">₹850</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust Badges Bar -->
+    <section class="trust-bar" id="artisan-values" aria-label="Brand Guarantees">
+      <div class="trust-grid">
+        <div class="trust-card">
+          <div class="trust-icon">🏺</div>
+          <div class="trust-info">
+            <h3>Handmade In-House</h3>
+            <p>Every piece is uniquely crafted in our small batch artisan studio.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">🚚</div>
+          <div class="trust-info">
+            <h3>7 to 10 Days Delivery</h3>
+            <p>Careful slow-dispatch and tracked doorstep delivery pan-India.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-info-badge trust-icon">📍</div>
+          <div class="trust-info">
+            <h3>Kolkata & Pan-India</h3>
+            <p>Flat ₹60 delivery in Kolkata, ₹100–₹150 across India. Free over ₹1,999.</p>
+          </div>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">🌿</div>
+          <div class="trust-info">
+            <h3>Eco & Safe Packaging</h3>
+            <p>Non-toxic glazes and 100% plastic-free protective wrapping.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shop / Product Catalog Section -->
+    <section class="shop-section" id="shop">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-kicker">Curated Collection</span>
+          <h2 class="section-title">Explore Our Handcrafted Creations</h2>
+          <p class="section-subtitle">Discover handcrafted ceramics, handwoven accents, and natural home accessories built to last generations.</p>
+        </div>
+
+        <!-- Filter and Sort Controls -->
+        <div class="filter-controls">
+          <div class="category-pills" id="categoryPills" role="tablist" aria-label="Product Categories">
+            <button class="pill-btn active" data-category="all" role="tab" aria-selected="true">All Pieces</button>
+            <button class="pill-btn" data-category="pottery" role="tab" aria-selected="false">Pottery & Ceramics</button>
+            <button class="pill-btn" data-category="decor" role="tab" aria-selected="false">Home Accents</button>
+            <button class="pill-btn" data-category="textiles" role="tab" aria-selected="false">Handwoven Textiles</button>
+            <button class="pill-btn" data-category="accessories" role="tab" aria-selected="false">Handmade Jewelry</button>
+          </div>
+
+          <div class="sort-wrapper">
+            <label for="sortSelect">Sort by:</label>
+            <select id="sortSelect" aria-label="Sort products">
+              <option value="featured">Featured Artisans</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="rating-desc">Highest Rated</option>
+              <option value="name-asc">Alphabetical (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Active Filter Indicator -->
+        <div class="active-filter-status" id="activeFilterStatus">
+          Showing <span id="productCount">0</span> handcrafted pieces
+        </div>
+
+        <!-- Product Grid -->
+        <div class="product-grid" id="productGrid" aria-live="polite">
+          <!-- Populated dynamically via JavaScript -->
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="empty-icon">🔍</div>
+          <h3>No matching crafts found</h3>
+          <p>Try clearing your search query or switching categories.</p>
+          <button class="btn btn-secondary" id="resetFiltersBtn">Reset All Filters</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Storytelling / Craftsmanship Section -->
+    <section class="story-section" id="story">
+      <div class="story-wrapper">
+        <div class="story-image-col">
+          <img 
+            src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=900&q=80" 
+            alt="Handcrafting pottery on wheel"
+            loading="lazy"
+          >
+          <div class="story-stamp">
+            <span>RSA</span>
+            <small>Est. Studio</small>
+          </div>
+        </div>
+
+        <div class="story-content-col">
+          <span class="section-kicker">Behind The Brand</span>
+          <h2 class="section-title">The Philosophy of RSA Creations</h2>
+          <p>
+            In a world flooded with automated mass production, <strong>RSA Creations</strong> was born from a desire to reconnect with tactile, slow living. We believe objects in your personal sanctuary should hold memories, human warmth, and subtle natural imperfections.
+          </p>
+          <div class="story-highlights">
+            <div class="highlight-item">
+              <span class="check-bullet">✓</span>
+              <div>
+                <strong>Natural Raw Materials</strong>
+                <p>Pure stoneware clay, lead-free glazes, reclaimed teakwood, and unbleached cotton fibers.</p>
+              </div>
+            </div>
+            <div class="highlight-item">
+              <span class="check-bullet">✓</span>
+              <div>
+                <strong>Zero Waste Studio</strong>
+                <p>Excess clay scraps are re-hydrated and reused; fabric cuttings are turned into decorative tassels.</p>
+              </div>
+            </div>
+            <div class="highlight-item">
+              <span class="check-bullet">✓</span>
+              <div>
+                <strong>Made With Soul</strong>
+                <p>No two items are 100% identical—making every RSA Creations piece exclusively yours.</p>
+              </div>
+            </div>
+          </div>
+          <a href="#shop" class="btn btn-primary">Support Our Studio</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Customer Reviews / Testimonials -->
+    <section class="reviews-section" id="reviews">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-kicker">Customer Love</span>
+          <h2 class="section-title">Cherished in Homes Around the World</h2>
+          <p class="section-subtitle">Real experiences from collectors who value handcrafted warmth.</p>
+        </div>
+
+        <div class="reviews-grid">
+          <article class="review-card">
+            <div class="stars">★★★★★</div>
+            <p class="review-text">"The ceramic mug from RSA Creations has transformed my morning tea ritual. You can feel the thumb indentations of the artisan who formed it. Absolutely exquisite!"</p>
+            <div class="reviewer-info">
+              <div class="reviewer-avatar">EM</div>
+              <div>
+                <h4>Elena Martinez</h4>
+                <span>Purchased: Raw Glaze Studio Mug</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="review-card">
+            <div class="stars">★★★★★</div>
+            <p class="review-text">"I ordered the woven jute wall hanging for my living room and was blown away by the texture. Shipping was fast, and the plastic-free packaging was a delightful touch."</p>
+            <div class="reviewer-info">
+              <div class="reviewer-avatar">DK</div>
+              <div>
+                <h4>David Kumar</h4>
+                <span>Purchased: Handwoven Jute Tapestry</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="review-card">
+            <div class="stars">★★★★★</div>
+            <p class="review-text">"The brass earrings are wonderfully lightweight and have a gorgeous hammered texture. You won't find craftsmanship like this in standard retail stores."</p>
+            <div class="reviewer-info">
+              <div class="reviewer-avatar">SP</div>
+              <div>
+                <h4>Sarah Jenkins</h4>
+                <span>Purchased: Hammered Sunburst Drops</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter & Artisan Community -->
+    <section class="newsletter-section" id="contact">
+      <div class="newsletter-card">
+        <div class="newsletter-content">
+          <span class="newsletter-kicker">Join the RSA Family</span>
+          <h2>Get 10% off your first handmade purchase</h2>
+          <p>Subscribe for studio behind-the-scenes, early access to limited seasonal kiln drops, and artisan stories.</p>
+          <form class="newsletter-form" id="newsletterForm">
+            <input type="email" id="newsletterEmail" placeholder="Enter your email address" required aria-label="Email address">
+            <button type="submit" class="btn btn-primary">Subscribe</button>
+          </form>
+          <small class="privacy-note">No spam, ever. Unsubscribe at any time.</small>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col brand-col">
+        <div class="brand-logo">
+          <span class="logo-mark">RSA</span>
+          <span class="logo-text">Creations</span>
+        </div>
+        <p class="footer-desc">Crafting soulful handmade products with natural materials and mindful slow-design ethics.</p>
+        <div class="social-links">
+          <a href="#" aria-label="Instagram">Instagram</a>
+          <a href="#" aria-label="Pinterest">Pinterest</a>
+          <a href="#" aria-label="Facebook">Facebook</a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Shop Categories</h4>
+        <ul>
+          <li><a href="#shop" data-filter="pottery">Pottery & Ceramics</a></li>
+          <li><a href="#shop" data-filter="decor">Home Accents</a></li>
+          <li><a href="#shop" data-filter="textiles">Handwoven Goods</a></li>
+          <li><a href="#shop" data-filter="accessories">Artisan Jewelry</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="#artisan-values">Shipping & Delivery</a></li>
+          <li><a href="#artisan-values">Returns & Exchanges</a></li>
+          <li><a href="#artisan-values">Artisan Care Guide</a></li>
+          <li><a href="#contact">Custom Commissions</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Studio Details</h4>
+        <p>RSA Creations Artisan Workshop</p>
+        <p>Email: hello@rsacreations.com</p>
+        <p>Monday - Friday: 9am - 6pm</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 RSA Creations. All rights reserved. Handcrafted with love. <a href="/admin" style="color: var(--color-terracotta); text-decoration: none; margin-left: 12px; font-weight: 600;">⚙️ Admin Operations Portal</a></p>
+      <div class="payment-methods">
+        <span>Visa</span> • <span>Mastercard</span> • <span>Apple Pay</span> • <span>PayPal</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Slide-out Cart Drawer -->
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping Cart" aria-hidden="true">
+    <div class="cart-backdrop" id="cartBackdrop"></div>
+    <div class="cart-panel">
+      <div class="cart-header">
+        <div class="cart-title-wrap">
+          <h3>Your Basket</h3>
+          <span class="cart-count" id="cartDrawerCount">(0 items)</span>
+        </div>
+        <button class="close-btn" id="cartCloseBtn" aria-label="Close Shopping Cart">&times;</button>
+      </div>
+
+      <!-- Free shipping progress bar -->
+      <div class="free-shipping-tracker">
+        <div class="tracker-text" id="freeShippingText">Add ₹1,999 more to unlock Free Delivery!</div>
+        <div class="tracker-bar">
+          <div class="tracker-fill" id="trackerFill" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Shipping Destination Selector inside Cart -->
+      <div class="cart-shipping-estimator">
+        <div class="estimator-header">
+          <span>📍 Delivery To:</span>
+          <select id="cartDestinationSelect" aria-label="Select Delivery Location">
+            <option value="kolkata">Kolkata (₹60)</option>
+            <option value="wb">West Bengal (outside Kolkata) (₹100)</option>
+            <option value="india">Rest of India (₹150)</option>
+          </select>
+        </div>
+        <div class="delivery-timeline-pill">
+          <span>🚚 Timeline: <strong>7 to 10 Days</strong> (Tracked Delivery)</span>
+        </div>
+      </div>
+
+      <!-- Cart Item List -->
+      <div class="cart-items" id="cartItemsList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Cart Footer / Summary -->
+      <div class="cart-footer" id="cartFooter">
+        <div class="promo-box">
+          <input type="text" id="promoInput" placeholder="Promo code (e.g. HANDMADE10)" aria-label="Promo code">
+          <button type="button" id="applyPromoBtn" class="btn btn-secondary btn-sm">Apply</button>
+        </div>
+        <div class="promo-discount-badge" id="promoDiscountBadge" style="display: none;">
+          <span>Code HANDMADE10 applied! (10% off)</span>
+          <button type="button" id="removePromoBtn">&times;</button>
+        </div>
+
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="cartSubtotal">₹0</span>
+        </div>
+        <div class="summary-row" id="discountRow" style="display: none;">
+          <span>Discount (10%)</span>
+          <span id="cartDiscount" class="text-terracotta">-₹0</span>
+        </div>
+        <div class="summary-row">
+          <span id="cartShippingLabel">Delivery (Kolkata)</span>
+          <span id="cartShipping">₹60</span>
+        </div>
+        <div class="summary-row total-row">
+          <span>Total Amount</span>
+          <span id="cartTotal">₹0</span>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="checkoutBtn">Proceed to Checkout</button>
+        <button class="btn-text" id="continueShoppingBtn">Or Continue Browsing</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Product Quick View Modal (Modern <dialog> with closedby="any" and light-dismiss fallback) -->
+  <dialog class="quick-view-dialog" id="quickViewDialog" closedby="any" aria-labelledby="modalProductTitle">
+    <div class="quick-view-wrapper">
+      <button class="dialog-close-btn" id="modalCloseBtn" aria-label="Close details">&times;</button>
+      <div class="modal-grid">
+        <div class="modal-gallery">
+          <img id="modalProductImage" src="" alt="" loading="lazy">
+          <span class="modal-badge" id="modalProductBadge">Handcrafted</span>
+        </div>
+        <div class="modal-details">
+          <span class="modal-category" id="modalProductCategory">Pottery</span>
+          <h2 class="modal-title" id="modalProductTitle">Product Title</h2>
+          <div class="modal-rating" id="modalProductRating">★★★★★ (4.9)</div>
+          <div class="modal-price" id="modalProductPrice">$0.00</div>
+          <p class="modal-description" id="modalProductDescription">Detailed artisan craft description.</p>
+          
+          <div class="modal-specs">
+            <div class="spec-row">
+              <span class="spec-label">Materials:</span>
+              <span class="spec-value" id="modalProductMaterials">Stoneware clay</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Dimensions:</span>
+              <span class="spec-value" id="modalProductDimensions">5" x 4"</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Craft Method:</span>
+              <span class="spec-value" id="modalProductMethod">Wheel thrown & kiln fired</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <div class="qty-selector">
+              <button type="button" class="qty-btn" id="modalQtyMinus" aria-label="Decrease quantity">-</button>
+              <input type="number" id="modalQtyInput" value="1" min="1" max="10" readonly aria-label="Quantity">
+              <button type="button" class="qty-btn" id="modalQtyPlus" aria-label="Increase quantity">+</button>
+            </div>
+            <button class="btn btn-primary" id="modalAddToCartBtn">Add to Basket</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Simulated Checkout Modal -->
+  <dialog class="checkout-dialog" id="checkoutDialog" closedby="any" aria-labelledby="checkoutTitle">
+    <div class="checkout-wrapper">
+      <button class="dialog-close-btn" id="checkoutCloseBtn" aria-label="Close checkout">&times;</button>
+      <div class="checkout-header">
+        <span class="logo-mark">RSA</span>
+        <h2 id="checkoutTitle">Checkout & Confirm Order</h2>
+        <p>Doorstep delivery across Kolkata (₹60) and All India (₹100–₹150). Free above ₹1,999.</p>
+      </div>
+
+      <!-- Quick Cart Items Review in Checkout -->
+      <div class="checkout-items-review">
+        <div class="review-items-header">
+          <h4>📦 Order Summary</h4>
+          <span id="checkoutItemsCount" class="items-count-badge">0 items</span>
+        </div>
+        <div class="checkout-items-list" id="checkoutItemsList">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+      <form class="checkout-form" id="checkoutForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custFirstName">First Name *</label>
+            <input type="text" id="custFirstName" required placeholder="Aarav">
+          </div>
+          <div class="form-group">
+            <label for="custLastName">Last Name *</label>
+            <input type="text" id="custLastName" required placeholder="Mukherjee">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custPhone">Mobile Number * (For Delivery & Order Updates)</label>
+            <input type="tel" id="custPhone" required placeholder="9830012345" pattern="[0-9]{10}" title="Enter a valid 10-digit Indian mobile number">
+          </div>
+          <div class="form-group">
+            <label for="custEmail">Email Address</label>
+            <input type="email" id="custEmail" required placeholder="aarav@example.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="custAddress">Complete Street Address *</label>
+          <input type="text" id="custAddress" required placeholder="Flat / House No, Street, Landmark">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custCity">City *</label>
+            <input type="text" id="custCity" required placeholder="Kolkata">
+          </div>
+          <div class="form-group">
+            <label for="custZip">Pincode * (e.g. 700001)</label>
+            <input type="text" id="custZip" required placeholder="700001" maxlength="6">
+          </div>
+        </div>
+
+        <!-- Dynamic Delivery Info Banner -->
+        <div class="checkout-shipping-info" id="checkoutShippingInfo">
+          <div class="delivery-region-tag" id="checkoutRegionTag">📍 Detected: Kolkata Metropolitan Area</div>
+          <div class="delivery-timeline-tag">
+            🚚 Estimated Delivery: <strong>7 to 10 business days</strong> 
+            (<span id="checkoutDeliveryDates">Calculating...</span>)
+          </div>
+        </div>
+
+        <!-- Payment Method (Online Only, No COD) -->
+        <div class="checkout-payment-section">
+          <div class="payment-section-header">
+            <h4>💳 Payment Mode (Prepaid Only)</h4>
+            <span class="payment-badge-online">100% Online Secure</span>
+          </div>
+
+          <!-- COD Notice -->
+          <div class="cod-unavailable-notice">
+            <span class="cod-notice-icon">🚫</span>
+            <div>
+              <strong>Cash on Delivery (COD) Not Available</strong>
+              <p>To ensure safe doorstep delivery of fragile handcrafted pieces, we accept secure Prepaid Online Payments only.</p>
+            </div>
+          </div>
+
+          <!-- Payment Options -->
+          <div class="payment-options-grid">
+            <!-- Active Option: PhonePe / UPI -->
+            <div class="payment-option-card active" id="payPhonePeCard">
+              <div class="payment-option-header">
+                <input type="radio" name="paymentOption" id="payPhonePe" value="phonepe" checked>
+                <label for="payPhonePe" class="payment-option-title">
+                  <span class="payment-brand-badge phonepe-badge">PhonePe / UPI</span>
+                  <strong>Pay via PhonePe / Any UPI App</strong>
+                </label>
+              </div>
+
+              <div class="upi-details-box">
+                <div class="upi-id-row">
+                  <span>PhonePe UPI No:</span>
+                  <strong class="upi-number-highlight" id="phonePeNumberDisplay">7980883038</strong>
+                  <button type="button" class="btn-copy-upi" id="copyUpiBtn" title="Copy PhonePe Number">Copy 📋</button>
+                </div>
+                <div class="upi-id-row" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                  <span>UPI ID:</span>
+                  <code>7980883038@ybl</code>
+                </div>
+              </div>
+
+              <div class="upi-pay-instructions">
+                <ol>
+                  <li>Open <strong>PhonePe</strong>, GPay, Paytm, or any UPI app.</li>
+                  <li>Send the total payable amount to <strong>7980883038</strong>.</li>
+                  <li>Enter the 12-digit UPI / UTR Transaction ID below:</li>
+                </ol>
+                <div class="form-group" style="margin-top: 8px;">
+                  <label for="checkoutUpiTxn" style="font-size: 0.78rem; font-weight: 600;">UPI / UTR Transaction Reference No. (12 digits)</label>
+                  <input type="text" id="checkoutUpiTxn" placeholder="e.g. 428901234567" maxlength="16" class="upi-txn-input">
+                  <small style="font-size: 0.72rem; color: var(--text-muted);">Helps our artisans verify your prepaid payment instantly.</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Disabled Option: COD -->
+            <div class="payment-option-card disabled" title="Cash on Delivery is disabled">
+              <div class="payment-option-header">
+                <input type="radio" name="paymentOption" id="payCOD" value="cod" disabled>
+                <label for="payCOD" class="payment-option-title">
+                  <span class="payment-brand-badge disabled-badge">COD Unavailable</span>
+                  <span style="color: var(--text-muted); text-decoration: line-through;">Cash on Delivery (COD)</span>
+                </label>
+              </div>
+              <p class="disabled-reason">⚠️ Cash on delivery is not accepted for handcrafted artisan items. Please pay online.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-order-summary">
+          <div class="checkout-summary-row">
+            <span>Subtotal:</span>
+            <span id="checkoutSubtotal">₹0</span>
+          </div>
+          <div class="checkout-summary-row">
+            <span>Delivery Fee:</span>
+            <span id="checkoutDeliveryFee">₹60</span>
+          </div>
+          <div class="checkout-summary-row checkout-total-row">
+            <span>Total Payable:</span>
+            <strong id="checkoutTotalAmount">₹0</strong>
+          </div>
+          <p class="checkout-security-note">🔒 Genuine Handcrafted Guarantee • 100% Secure Online Prepaid Payment via PhonePe & UPI (No COD)</p>
+        </div>
+
+        <!-- Prominent Confirm & Place Order Action -->
+        <div class="checkout-submit-wrap">
+          <button type="submit" class="btn btn-primary btn-block checkout-confirm-btn" id="placeOrderBtn">
+            <span>✅ Confirm & Place Order</span>
+            <span id="placeOrderAmountBadge" class="btn-amount-badge">₹0</span>
+          </button>
+          <p class="order-guarantee-text">✨ Carefully handcrafted & packed sustainably. Delivery in 7–10 business days.</p>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Order Success Confirmation Modal -->
+  <dialog class="success-dialog" id="successDialog" closedby="any" aria-labelledby="successTitle">
+    <div class="success-wrapper">
+      <div class="success-icon">🎉</div>
+      <h2 id="successTitle">Order Confirmed!</h2>
+      <p>Thank you for supporting <strong>RSA Creations</strong>. Your handcrafted piece has been booked and scheduled for dispatch.</p>
+      
+      <div class="success-details-card">
+        <div class="success-detail-row">
+          <span>Order Reference ID:</span>
+          <strong id="successOrderNumber" class="order-id-badge">#RSA-KOL-8294</strong>
+        </div>
+        <div class="success-detail-row">
+          <span>Payment Mode:</span>
+          <strong style="color: #5F259F;">Online PhonePe UPI (7980883038)</strong>
+        </div>
+        <div class="success-detail-row">
+          <span>Estimated Delivery:</span>
+          <strong id="successDeliveryTimeline">7 to 10 business days</strong>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <a id="whatsappConfirmBtn" href="#" target="_blank" class="btn-whatsapp-confirm">
+          <span>💬 Send Order Receipt on WhatsApp</span>
+        </a>
+        <button class="btn btn-primary btn-block" id="successCloseBtn" style="margin-top: 10px;">Continue Shopping</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Auth Login/Signup Dialog -->
+  <dialog class="auth-dialog" id="authDialog" closedby="any" aria-labelledby="authDialogTitle">
+    <div class="auth-wrapper">
+      <button class="dialog-close-btn" id="authCloseBtn" aria-label="Close">&times;</button>
+      <div class="auth-header">
+        <span class="logo-mark">RSA</span>
+        <h2 id="authDialogTitle">Welcome to RSA Creations</h2>
+        <p>Sign in or create an account to shop our handcrafted collection</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="loginTab" data-tab="login">Password</button>
+        <button class="auth-tab" id="otpLoginTab" data-tab="otpLogin">Login via OTP 📲</button>
+        <button class="auth-tab" id="recoveryTab" data-tab="recovery">Forgot Password?</button>
+        <button class="auth-tab" id="signupTab" data-tab="signup">Sign Up</button>
+      </div>
+
+      <!-- Password Login Form -->
+      <form class="auth-form" id="loginForm">
+        <div class="form-group">
+          <label for="loginIdentifier">Email or Mobile Number</label>
+          <input type="text" id="loginIdentifier" required placeholder="e.g. aarav@email.com or 9830012345">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required placeholder="Enter your password" minlength="6">
+        </div>
+        <div class="auth-helper-row" style="display: flex; justify-content: space-between; align-items: center;">
+          <a href="#" id="loginViaOtpLink" class="auth-helper-link" style="color: #5F259F;">📲 Login via OTP instead</a>
+          <a href="#" id="forgotPasswordLink" class="auth-helper-link">Forgot Password?</a>
+        </div>
+        <div class="auth-error" id="loginError" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">Login to My Account</button>
+      </form>
+
+      <!-- OTP Instant Login Form -->
+      <form class="auth-form" id="otpLoginForm" style="display: none;">
+        <div class="recovery-intro">
+          <p>Login quickly without any password! Enter your registered <strong>Mobile Number or Email</strong> to receive a 6-digit OTP.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="otpLoginIdentifier">Registered Mobile Number or Email</label>
+          <div class="input-with-action">
+            <input type="text" id="otpLoginIdentifier" placeholder="e.g. 9830012345 or user@example.com">
+            <button type="button" class="btn btn-secondary btn-sm" id="sendLoginOtpBtn">Send OTP 📩</button>
+          </div>
+          <small class="auth-hint">We'll verify your registered account instantly.</small>
+        </div>
+
+        <!-- OTP Input field (visible after sending OTP) -->
+        <div class="form-group" id="loginOtpGroup" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label for="loginOtpCode" style="margin: 0; font-weight: 600;">Enter 6-Digit OTP</label>
+            <button type="button" id="resendLoginOtpBtn" class="auth-helper-link" style="border: none; background: transparent; font-size: 0.75rem; cursor: pointer;">Resend OTP</button>
+          </div>
+          <input type="text" id="loginOtpCode" placeholder="Enter 6-digit OTP" maxlength="6" style="letter-spacing: 0.2em; text-align: center; font-size: 1.15rem; font-weight: 700;">
+          <small class="auth-hint" style="color: var(--color-terracotta);">Check the notification prompt or toast for your 6-digit OTP.</small>
+        </div>
+
+        <div class="auth-error" id="otpLoginError" style="display: none;"></div>
+        <div class="auth-success" id="otpLoginSuccess" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="verifyLoginOtpBtn" style="display: none;">Verify OTP & Login</button>
+
+        <div class="auth-helper-row" style="text-align: center; margin-top: 6px;">
+          <a href="#" id="backToPasswordLoginLink" class="auth-helper-link">← Login with Password</a>
+        </div>
+      </form>
+
+      <!-- Forgot Password & Recover User ID Form with OTP -->
+      <form class="auth-form" id="recoveryForm" style="display: none;">
+        <div class="recovery-intro">
+          <p>Reset your <strong>Password</strong> and recover your <strong>User ID</strong> securely via OTP verification.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="recoveryMobile">Registered Mobile Number or Email</label>
+          <div class="input-with-action">
+            <input type="text" id="recoveryMobile" placeholder="e.g. 9830012345 or user@example.com">
+            <button type="button" class="btn btn-secondary btn-sm" id="findAccountBtn">Send OTP 📩</button>
+          </div>
+          <small class="auth-hint">Enter your 10-digit mobile number or email ID.</small>
+        </div>
+
+        <!-- Account Info Card (populated dynamically when Found) -->
+        <div class="recovered-account-card" id="recoveredAccountCard" style="display: none;">
+          <div class="recovered-card-header">
+            <span>✅ Account Found</span>
+            <span class="user-id-badge" id="recoveredUserId">USR-XXXX</span>
+          </div>
+          <div class="recovered-card-body">
+            <p><strong>Name:</strong> <span id="recoveredName">-</span></p>
+            <p><strong>Email:</strong> <span id="recoveredEmail">-</span></p>
+            <p><strong>Mobile:</strong> <span id="recoveredMobileDisplay">-</span></p>
+          </div>
+        </div>
+
+        <!-- OTP verification for reset -->
+        <div class="form-group" id="recoveryOtpGroup" style="display: none;">
+          <label for="recoveryOtpCode">Enter 6-Digit OTP</label>
+          <input type="text" id="recoveryOtpCode" placeholder="Enter 6-digit OTP" maxlength="6" style="letter-spacing: 0.2em; text-align: center; font-size: 1.15rem; font-weight: 700;">
+          <small class="auth-hint" style="color: var(--color-terracotta);">Enter the 6-digit OTP received.</small>
+        </div>
+
+        <div id="newPasswordGroup" style="display: none;">
+          <div class="form-group">
+            <label for="newRecoveryPassword">New Password</label>
+            <input type="password" id="newRecoveryPassword" placeholder="Minimum 6 characters" minlength="6">
+          </div>
+
+          <div class="form-group">
+            <label for="confirmRecoveryPassword">Confirm New Password</label>
+            <input type="password" id="confirmRecoveryPassword" placeholder="Re-enter new password" minlength="6">
+          </div>
+        </div>
+
+        <div class="auth-error" id="recoveryError" style="display: none;"></div>
+        <div class="auth-success" id="recoverySuccess" style="display: none;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="recoverySubmitBtn" style="display: none;">Verify OTP & Reset Password</button>
+
+        <div class="auth-helper-row" style="text-align: center; margin-top: 6px;">
+          <a href="#" id="backToLoginLink" class="auth-helper-link">← Back to Login</a>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form class="auth-form" id="signupForm" style="display: none;">
+        <div class="form-group">
+          <label for="signupName">Full Name</label>
+          <input type="text" id="signupName" required placeholder="e.g. Aarav Mukherjee" minlength="2">
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" placeholder="e.g. aarav@email.com">
+        </div>
+        <div class="form-group">
+          <label for="signupMobile">Mobile Number (10 digits)</label>
+          <input type="tel" id="signupMobile" placeholder="e.g. 9830012345" maxlength="10">
+        </div>
+        <small class="auth-hint">Provide at least one: email or mobile</small>
+        <div class="form-group">
+          <label for="signupPassword">Create Password</label>
+          <input type="password" id="signupPassword" required placeholder="Minimum 6 characters" minlength="6">
+        </div>
+        <div class="auth-error" id="signupError" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="signupSubmitBtn">Create My Account</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Address Dialog (shown after login if no address saved) -->
+  <dialog class="auth-dialog address-dialog" id="addressDialog" closedby="any" aria-labelledby="addressDialogTitle">
+    <div class="auth-wrapper">
+      <button class="dialog-close-btn" id="addressCloseBtn" aria-label="Close">&times;</button>
+      <div class="auth-header">
+        <span class="logo-mark">RSA</span>
+        <h2 id="addressDialogTitle">Add Delivery Address</h2>
+        <p>Save your address for faster checkout and doorstep delivery</p>
+      </div>
+
+      <form class="auth-form" id="addressForm">
+        <div class="form-group">
+          <label for="addrStreet">Street Address</label>
+          <input type="text" id="addrStreet" required placeholder="e.g. Flat 4B, Park Street">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="addrCity">City</label>
+            <input type="text" id="addrCity" required placeholder="e.g. Kolkata">
+          </div>
+          <div class="form-group">
+            <label for="addrPincode">Pincode</label>
+            <input type="text" id="addrPincode" required placeholder="e.g. 700001" maxlength="6">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="addrState">State</label>
+          <input type="text" id="addrState" placeholder="e.g. West Bengal">
+        </div>
+        <div class="auth-error" id="addressError" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary btn-block">Save Address & Continue Shopping</button>
+      </form>
+
+      <!-- Saved Addresses List -->
+      <div class="saved-addresses" id="savedAddressesList" style="display: none;">
+        <h4>📍 Saved Addresses</h4>
+        <div id="addressCards"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Logged-in User Dropdown (mini) -->
+  <div class="user-dropdown" id="userDropdown" style="display: none;">
+    <div class="dropdown-user-info">
+      <div class="user-avatar" id="dropdownAvatar">A</div>
+      <div>
+        <strong id="dropdownName">Customer</strong>
+        <small id="dropdownContact">email/mobile</small>
+      </div>
+    </div>
+    <hr>
+    <button class="dropdown-item" id="dropdownAddressBtn">📍 My Addresses</button>
+    <button class="dropdown-item" id="dropdownOrdersBtn">📦 My Orders</button>
+    <button class="dropdown-item logout-item" id="dropdownLogoutBtn">🚪 Logout</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

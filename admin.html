@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSA Creations | Artisan Admin Operations & Orders Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- Top Admin Navigation Bar -->
+  <header class="admin-header">
+    <div class="brand-group">
+      <span class="brand-badge">RSA</span>
+      <h1 class="brand-title">RSA Creations</h1>
+      <span class="brand-sub">Artisan Admin Hub</span>
+    </div>
+
+    <div class="header-controls">
+      <a href="/" class="btn btn-secondary" target="_blank" rel="noopener">
+        <span>🛍️ View Storefront</span> <span>↗</span>
+      </a>
+      <button class="btn btn-danger btn-sm" id="adminLogoutBtn">
+        <span>🚪 Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Admin Application Layout -->
+  <div class="admin-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar" aria-label="Admin Navigation">
+      <button class="nav-btn active" data-tab="overview">
+        <span>📊</span> <span>Overview</span>
+      </button>
+      <button class="nav-btn" data-tab="orders">
+        <span>📦</span> <span>Orders & Shipping</span>
+      </button>
+      <button class="nav-btn" data-tab="customers">
+        <span>👥</span> <span>Customer Directory</span>
+      </button>
+      <button class="nav-btn" data-tab="products">
+        <span>🏺</span> <span>Products & Catalog</span>
+      </button>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+
+      <!-- ================================================================== -->
+      <!-- TAB 1: OVERVIEW & DASHBOARD METRICS -->
+      <!-- ================================================================== -->
+      <section class="tab-pane active" id="tab-overview">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Storefront & Workshop Performance</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8125rem;">Real-time orders, revenue, customer insights, and live artisanal catalog.</p>
+          </div>
+          <button class="btn btn-primary" id="quickNewProductBtn" onclick="document.querySelector('[data-tab=\'products\']').click(); document.getElementById('openAddProductBtn').click();">
+            <span>＋ Add Handcrafted Product</span>
+          </button>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card terracotta">
+            <div class="metric-header"><span>TOTAL REVENUE</span> <span>₹</span></div>
+            <div class="metric-value" id="metricRevenue">₹0</div>
+            <div class="metric-sub">From confirmed customer orders</div>
+          </div>
+
+          <div class="metric-card amber">
+            <div class="metric-header"><span>TOTAL ORDERS</span> <span>📦</span></div>
+            <div class="metric-value" id="metricOrders">0</div>
+            <div class="metric-sub">Recorded in orders.json</div>
+          </div>
+
+          <div class="metric-card amber">
+            <div class="metric-header"><span>IN ARTISAN WORKSHOP</span> <span>🛠️</span></div>
+            <div class="metric-value" id="metricWorkshop">0</div>
+            <div class="metric-sub">Being slow-crafted / packed</div>
+          </div>
+
+          <div class="metric-card blue">
+            <div class="metric-header"><span>IN TRANSIT / SHIPPING</span> <span>🚚</span></div>
+            <div class="metric-value" id="metricShipping">0</div>
+            <div class="metric-sub">Dispatched with delivery tracking</div>
+          </div>
+
+          <div class="metric-card sage">
+            <div class="metric-header"><span>DELIVERED</span> <span>🏡</span></div>
+            <div class="metric-value" id="metricDelivered">0</div>
+            <div class="metric-sub">Doorstep delivery completed</div>
+          </div>
+
+          <div class="metric-card blue">
+            <div class="metric-header"><span>REGISTERED CUSTOMERS</span> <span>👥</span></div>
+            <div class="metric-value" id="metricCustomers">0</div>
+            <div class="metric-sub">Mobile & email accounts</div>
+          </div>
+
+          <div class="metric-card terracotta">
+            <div class="metric-header"><span>ACTIVE PRODUCTS</span> <span>🏺</span></div>
+            <div class="metric-value" id="metricProducts">0</div>
+            <div class="metric-sub">Available in store catalog</div>
+          </div>
+        </div>
+
+        <!-- Recent Orders Snapshot -->
+        <div class="section-header" style="margin-top: 32px;">
+          <h3 style="font-size: 1.1rem; font-weight: 700;">Recent Orders</h3>
+          <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-tab=\'orders\']').click();">View All Orders →</button>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Destination</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrdersTableBody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading recent orders...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- TAB 2: ORDERS & SHIPPING MANAGER -->
+      <!-- ================================================================== -->
+      <section class="tab-pane" id="tab-orders">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Customer Orders & Tracked Shipping</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8125rem;">Monitor production, change status, assign dispatch tracking, and notify customers.</p>
+          </div>
+        </div>
+
+        <div class="section-header" style="background: var(--bg-card); padding: 14px 18px; border-radius: var(--radius-lg); border: 1px solid var(--border-admin);">
+          <div class="filter-bar">
+            <button class="filter-pill active" data-filter="all">All Orders</button>
+            <button class="filter-pill" data-filter="workshop">🛠️ In Workshop</button>
+            <button class="filter-pill" data-filter="shipping">🚚 Shipping / In Transit</button>
+            <button class="filter-pill" data-filter="delivered">📦 Delivered</button>
+            <button class="filter-pill" data-filter="cancelled">❌ Cancelled</button>
+          </div>
+
+          <div>
+            <input type="text" class="search-input" id="orderSearchInput" placeholder="🔍 Search Order ID, Customer, Phone, City...">
+          </div>
+        </div>
+
+        <!-- List of Order Cards -->
+        <div class="orders-list" id="ordersListContainer">
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">Loading orders...</div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- TAB 3: CUSTOMER DIRECTORY -->
+      <!-- ================================================================== -->
+      <section class="tab-pane" id="tab-customers">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Customer Directory & Profiles</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8125rem;">Customer accounts registered via mobile number or email, delivery addresses, and total spent.</p>
+          </div>
+          <input type="text" class="search-input" id="customerSearchInput" placeholder="🔍 Search by name, mobile, email...">
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Customer & User ID</th>
+                <th>Mobile Number</th>
+                <th>Email Address</th>
+                <th>Default Delivery Address</th>
+                <th>Orders Placed</th>
+                <th>Total Spent</th>
+              </tr>
+            </thead>
+            <tbody id="customersTableBody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading customers...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- TAB 4: PRODUCTS & SELLING CATALOG -->
+      <!-- ================================================================== -->
+      <section class="tab-pane" id="tab-products">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Handcrafted Products & Selling Catalog</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8125rem;">Add new artisanal pieces, modify inventory stock, and manage live products on the storefront.</p>
+          </div>
+          <button class="btn btn-primary" id="openAddProductBtn">
+            <span>＋ Add New Product for Selling</span>
+          </button>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="admin-products-grid" id="adminProductsGrid">
+          <div style="text-align: center; color: var(--text-muted); padding: 40px;">Loading catalog products...</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================================================================== -->
+  <!-- MODAL: ADD NEW PRODUCT FOR SELLING -->
+  <!-- ================================================================== -->
+  <dialog class="admin-modal" id="addProductModal" closedby="any" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <h3 id="modalTitle">🏺 Add New Handcrafted Product</h3>
+      <button class="modal-close-btn" id="closeAddProductBtn" aria-label="Close">&times;</button>
+    </div>
+
+    <form class="modal-body" id="addProductForm">
+      <div class="form-group">
+        <label for="newProdTitle">Product Title / Name *</label>
+        <input type="text" id="newProdTitle" required placeholder="e.g. Hand-Carved Teakwood Candle Sconce">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newProdCategory">Category *</label>
+          <select id="newProdCategory" required>
+            <option value="pottery">Pottery & Ceramics</option>
+            <option value="textiles">Handwoven Textiles</option>
+            <option value="decor" selected>Home Accents & Decor</option>
+            <option value="accessories">Handmade Jewelry & Accessories</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="newProdPrice">Selling Price (INR ₹) *</label>
+          <input type="number" id="newProdPrice" required placeholder="e.g. 1250" min="50" step="10">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newProdStock">Inventory Stock (units)</label>
+          <input type="number" id="newProdStock" value="10" min="0">
+        </div>
+        <div class="form-group">
+          <label for="newProdBadge">Product Badge (optional)</label>
+          <input type="text" id="newProdBadge" placeholder="e.g. Artisan Pick / Limited Drop / New">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="newProdImage">Product Image URL *</label>
+        <input type="url" id="newProdImage" required placeholder="https://images.unsplash.com/...">
+        <div class="preset-pills">
+          <span style="font-size: 0.75rem; color: var(--text-muted); align-self: center;">Quick Presets:</span>
+          <button type="button" class="preset-pill" data-preset="pottery">🏺 Ceramic</button>
+          <button type="button" class="preset-pill" data-preset="terracotta">🌱 Terracotta</button>
+          <button type="button" class="preset-pill" data-preset="tapestry">🧵 Loom Tapestry</button>
+          <button type="button" class="preset-pill" data-preset="woodwork">🪵 Teak Root</button>
+          <button type="button" class="preset-pill" data-preset="candle">🕯️ Beeswax Candle</button>
+          <button type="button" class="preset-pill" data-preset="jewelry">✨ Hammered Brass</button>
+          <button type="button" class="preset-pill" data-preset="macrame">🪴 Macramé Shelf</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newProdMaterials">Materials Used</label>
+          <input type="text" id="newProdMaterials" placeholder="e.g. Native clay, 100% natural jute">
+        </div>
+        <div class="form-group">
+          <label for="newProdDimensions">Dimensions</label>
+          <input type="text" id="newProdDimensions" placeholder="e.g. 8\" Dia x 5\" Height">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="newProdMethod">Artisan Crafting Method</label>
+        <input type="text" id="newProdMethod" placeholder="e.g. Hand-thrown wheel pottery, wood-fired">
+      </div>
+
+      <div class="form-group">
+        <label for="newProdDescription">Description</label>
+        <textarea id="newProdDescription" rows="3" placeholder="Tell the customer about the craft, inspiration, and heritage technique..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%; justify-content: center; padding: 12px;">
+        ✓ Publish Product to Live Storefront
+      </button>
+    </form>
+  </dialog>
+
+  <!-- ================================================================== -->
+  <!-- MODAL: ADMIN AUTHENTICATION -->
+  <!-- ================================================================== -->
+  <dialog class="admin-modal" id="adminAuthDialog" style="max-width: 420px;">
+    <div class="modal-header">
+      <h3 style="display: flex; align-items: center; gap: 8px;">
+        <span class="brand-badge">RSA</span> Admin Sign In
+      </h3>
+    </div>
+
+    <form class="modal-body" id="adminLoginForm">
+      <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.4;">
+        Access RSA Creations orders management, shipping dispatch, customer directory, and product catalog controls.
+      </p>
+
+      <div class="form-group">
+        <label for="adminUsername">Admin Username or Email</label>
+        <input type="text" id="adminUsername" required placeholder="admin@rsacreations.com" value="admin@rsacreations.com">
+      </div>
+
+      <div class="form-group">
+        <label for="adminPassword">Password</label>
+        <input type="password" id="adminPassword" required placeholder="Enter admin password" value="admin123">
+      </div>
+
+      <div style="background: var(--bg-surface); padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.75rem; color: var(--color-amber);">
+        🔑 <strong>Default Master Credentials:</strong><br>
+        Email: <code>admin@rsacreations.com</code><br>
+        Password: <code>admin123</code>
+        <button type="button" class="btn btn-secondary btn-sm" id="fillDemoBtn" style="margin-top: 6px; width: 100%; justify-content: center;">
+          ⚡ Auto-Fill Demo Credentials
+        </button>
+      </div>
+
+      <div id="adminLoginError" style="display: none; background: var(--color-danger-light); color: var(--color-danger); padding: 8px 12px; border-radius: var(--radius-md); font-size: 0.75rem;"></div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+        Sign In to Admin Hub
+      </button>
+    </form>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div class="admin-toast-container" id="adminToastContainer" aria-live="polite"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
