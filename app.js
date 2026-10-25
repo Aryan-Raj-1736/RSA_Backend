@@ -304,6 +304,8 @@ const dropdownContact = document.getElementById('dropdownContact');
 const dropdownAddressBtn = document.getElementById('dropdownAddressBtn');
 const dropdownOrdersBtn = document.getElementById('dropdownOrdersBtn');
 const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+const dropdownLoginModalBtn = document.getElementById('dropdownLoginModalBtn');
+const mobileNavLoginBtn = document.getElementById('mobileNavLoginBtn');
 
 // Mobile Nav
 const mobileNavToggle = document.getElementById('mobileNavToggle');
@@ -408,15 +410,18 @@ function autofillCheckoutFromUser() {
 }
 
 function updateAuthUI() {
+  const mobileLogin = document.getElementById('mobileNavLoginBtn');
   if (state.currentUser) {
-    const firstName = state.currentUser.name.split(' ')[0];
+    const firstName = (state.currentUser.name || 'User').split(' ')[0];
     if (accountLabel) accountLabel.textContent = firstName;
+    if (mobileLogin) mobileLogin.textContent = `👤 ${firstName} (My Account)`;
     if (dropdownAvatar) dropdownAvatar.textContent = (state.currentUser.name[0] || 'U').toUpperCase();
     if (dropdownName) dropdownName.textContent = state.currentUser.name;
     if (dropdownContact) dropdownContact.textContent = state.currentUser.email || state.currentUser.mobile || 'Customer';
     autofillCheckoutFromUser();
   } else {
     if (accountLabel) accountLabel.textContent = 'Login';
+    if (mobileLogin) mobileLogin.textContent = '👤 Login / Sign Up';
     if (userDropdown) userDropdown.style.display = 'none';
   }
 }
@@ -457,9 +462,27 @@ function switchAuthTab(tab) {
 }
 
 function openAuthModal(mode = 'login') {
-  switchAuthTab(mode);
-  if (userDropdown) userDropdown.style.display = 'none';
-  authDialog.showModal();
+  try {
+    switchAuthTab(mode);
+    if (userDropdown) userDropdown.style.display = 'none';
+    if (authDialog) {
+      if (typeof authDialog.showModal === 'function') {
+        if (authDialog.open) {
+          authDialog.close();
+        }
+        authDialog.showModal();
+      } else {
+        authDialog.setAttribute('open', '');
+        authDialog.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    console.warn('showModal fallback used:', err);
+    if (authDialog) {
+      authDialog.setAttribute('open', '');
+      authDialog.style.display = 'block';
+    }
+  }
 }
 
 function renderSavedAddresses() {
@@ -1833,6 +1856,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Account button in header
   if (accountHeaderBtn) {
     accountHeaderBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       e.stopPropagation();
       if (state.currentUser) {
         const isVisible = userDropdown.style.display === 'flex';
@@ -1843,16 +1867,69 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Mobile Nav Login button
+  if (mobileNavLoginBtn) {
+    mobileNavLoginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (mainNav) mainNav.classList.remove('open');
+      if (mobileNavToggle) mobileNavToggle.setAttribute('aria-expanded', 'false');
+      if (state.currentUser) {
+        const isVisible = userDropdown.style.display === 'flex';
+        userDropdown.style.display = isVisible ? 'none' : 'flex';
+      } else {
+        openAuthModal('login');
+      }
+    });
+  }
+
+  // Switch / Login Account button inside dropdown
+  if (dropdownLoginModalBtn) {
+    dropdownLoginModalBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (userDropdown) userDropdown.style.display = 'none';
+      openAuthModal('login');
+    });
+  }
+
   // Close dropdown on outside click
   document.addEventListener('click', (e) => {
-    if (userDropdown && !userDropdown.contains(e.target) && e.target !== accountHeaderBtn) {
-      userDropdown.style.display = 'none';
+    if (userDropdown && userDropdown.style.display === 'flex') {
+      const isAccountBtn = accountHeaderBtn && accountHeaderBtn.contains(e.target);
+      const isMobileBtn = mobileNavLoginBtn && mobileNavLoginBtn.contains(e.target);
+      const isDropdown = userDropdown.contains(e.target);
+      if (!isDropdown && !isAccountBtn && !isMobileBtn) {
+        userDropdown.style.display = 'none';
+      }
     }
   });
 
   // Auth Dialog Close
   if (authCloseBtn) {
-    authCloseBtn.addEventListener('click', () => authDialog.close());
+    authCloseBtn.addEventListener('click', () => {
+      try {
+        if (authDialog.open) authDialog.close();
+      } catch (err) {}
+      authDialog.removeAttribute('open');
+      authDialog.style.display = '';
+    });
+  }
+
+  // Close Auth Dialog when tapping backdrop
+  if (authDialog) {
+    authDialog.addEventListener('click', (e) => {
+      const rect = authDialog.getBoundingClientRect();
+      const isInDialog = (
+        rect.top <= e.clientY && e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX && e.clientX <= rect.left + rect.width
+      );
+      if (!isInDialog) {
+        try {
+          if (authDialog.open) authDialog.close();
+        } catch (err) {}
+        authDialog.removeAttribute('open');
+        authDialog.style.display = '';
+      }
+    });
   }
 
   // Address Dialog Close
